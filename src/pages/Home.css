@@ -4,21 +4,20 @@
 
 /* Hero Section */
 .hero-section {
-  background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("https://images.unsplash.com/photo-1578469645742-46cae010e5d4?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");
+  background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), 
+    url("https://images.unsplash.com/photo-1578469645742-46cae010e5d4?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");
   background-size: cover;
   background-position: center;
   color: white;
-  height: 660px;
+  min-height: 60vh; /* Adjusts for better mobile responsiveness */
   text-align: center;
   padding: 6rem 1rem;
   margin-bottom: 3rem;
-  
-  display: flex; /* Enables Flexbox */
-  align-items: center; /* Centers vertically */
-  justify-content: center; /* Centers horizontally */
-  flex-direction: column; /* Stacks elements vertically */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
 }
-
 
 .hero-content h1 {
   font-size: 2.5rem;
@@ -33,13 +32,16 @@
   margin-right: auto;
 }
 
-/* Featured Destinations */
+/* Featured Destinations & Blogs */
 .featured-destinations,
 .recent-blogs {
-  width: 1140px;
+  margin-top: 120px;
+  max-width: 1140px; /* Ensures responsiveness */
+  width: 100%; /* Takes full width on smaller screens */
   margin-bottom: 4rem;
-  margin-left: auto; /* Push from the left */
-  margin-right: auto; /* Push from the right */
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 1rem; /* Adds padding on smaller screens */
 }
 
 .featured-destinations h2,
@@ -50,17 +52,11 @@
   color: var(--text-color);
 }
 
-/* Make Destination Cards 3 in a Row */
-.destinations-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr); /* 3 cards per row */
-  gap: 2rem;
-  margin-bottom: 2rem;
-}
-
+/* Grid Layouts */
+.destinations-grid,
 .blogs-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* More responsive */
   gap: 2rem;
   margin-bottom: 2rem;
 }
@@ -113,7 +109,9 @@
 
 /* CTA Section */
 .cta-section {
-  background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("https://images.unsplash.com/photo-1488085061387-422e29b40080?q=80&w=1931&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");
+  margin-top: 120px;
+  background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), 
+    url("https://images.unsplash.com/photo-1488085061387-422e29b40080?q=80&w=1931&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");
   background-size: cover;
   background-position: center;
   color: white;
@@ -134,13 +132,28 @@
   margin-right: auto;
 }
 
+/* RESPONSIVE FIXES */
 @media (max-width: 1024px) {
-  .destinations-grid {
-    grid-template-columns: repeat(2, 1fr); 
+  .destinations-grid,
+  .blogs-grid { 
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .hero-content h1 {
+    font-size: 2.2rem;
+  }
+
+  .hero-content p {
+    font-size: 1.1rem;
   }
 }
 
 @media (max-width: 768px) {
+  .hero-section {
+    padding: 4rem 1rem; /* Reduces padding on small screens */
+    min-height: 50vh; /* Adjusts height for smaller screens */
+  }
+
   .hero-content h1 {
     font-size: 2rem;
   }
@@ -150,13 +163,27 @@
   }
 
   .destinations-grid,
-  .blogs-grid {
-    grid-template-columns: 1fr; 
+  .blogs-grid { 
+    grid-template-columns: 1fr;
   }
 
   .featured-destinations h2,
   .recent-blogs h2,
   .cta-content h2 {
     font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-content h1 {
+    font-size: 1.8rem;
+  }
+
+  .hero-content p {
+    font-size: 0.95rem;
+  }
+
+  .cta-section {
+    padding: 3rem 1rem;
   }
 }
