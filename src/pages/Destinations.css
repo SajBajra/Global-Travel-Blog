@@ -1,0 +1,132 @@
+.destinations-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.destinations-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.destinations-header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.destinations-header p {
+  color: var(--light-text);
+  margin-bottom: 2rem;
+}
+
+.search-container {
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.destinations-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+.destination-card {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  background-color: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.destination-image {
+  height: 100%;
+}
+
+.destination-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.destination-content {
+  padding: 2rem;
+}
+
+.destination-content h2 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.destination-location {
+  color: var(--primary-color);
+  font-weight: 500;
+  margin-bottom: 1rem;
+}
+
+.destination-description {
+  margin-bottom: 1.5rem;
+  color: var(--light-text);
+}
+
+.destination-details {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.destination-climate,
+.destination-best-time {
+  background-color: var(--light-background);
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+}
+
+.destination-attractions h3 {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+
+.destination-attractions ul {
+  padding-left: 1.5rem;
+}
+
+.destination-attractions li {
+  margin-bottom: 0.25rem;
+  list-style-type: disc;
+}
+
+.no-results {
+  text-align: center;
+  padding: 3rem;
+  color: var(--light-text);
+}
+
+@media (max-width: 768px) {
+  .destination-card {
+    grid-template-columns: 1fr;
+  }
+
+  .destination-image {
+    height: 200px;
+  }
+
+  .destination-content {
+    padding: 1.5rem;
+  }
+
+  .destination-details {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
