@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router"
 import { ToastContainer } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
-import "antd/dist/reset.css" // Import Ant Design styles
+import "antd/dist/reset.css" 
 import "./App.css"
 
 // Components
