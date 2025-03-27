@@ -238,7 +238,7 @@ const ManageBlogs = () => {
         }}
         value={selectedCategory || undefined} // 'undefined' will let the select show as if nothing is selected
       >
-        <Option key="all" value="All">All</Option>
+        <Option key="all" value="All">All Categories</Option>
         {categories.map((category) => (
           <Option key={category.id} value={category.name}>
             {category.name}
