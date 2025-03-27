@@ -165,11 +165,7 @@ const Home = () => {
               <p>info@globaltravelblog.com</p>
             </div>
 
-            <div className="contact-card">
-              <FaClock className="contact-icon" />
-              <h3>Working Hours</h3>
-              <p>Mon - Fri: 9:00 AM - 5:00 PM</p>
-            </div>
+            
           </div>
 
           <div className="contact-map">
