@@ -72,6 +72,13 @@
   text-align: center;
 }
 
+/* Responsive styles */
+@media (max-width: 992px) {
+  .admin-card-icon {
+    font-size: 48px;
+  }
+}
+
 @media (max-width: 768px) {
   .admin-header h1 {
     font-size: 2rem;
@@ -79,6 +86,95 @@
 
   .admin-cards {
     grid-template-columns: 1fr;
+  }
+
+  .admin-card-icon {
+    font-size: 36px;
+  }
+
+  .ant-card-meta-title {
+    font-size: 16px !important;
+  }
+}
+
+.admin-dashboard {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.dashboard-header {
+  margin-bottom: 1.5rem;
+}
+
+.dashboard-header h2 {
+  margin-bottom: 0.5rem;
+}
+
+.stats-row {
+  margin-bottom: 1.5rem;
+}
+
+.stat-card {
+  height: 100%;
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.stat-footer {
+  margin-top: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.quick-actions-card {
+  margin-bottom: 1.5rem;
+  border-radius: 8px;
+}
+
+.quick-actions-card h4 {
+  margin-bottom: 1rem;
+}
+
+.recent-card {
+  height: 100%;
+  border-radius: 8px;
+}
+
+.analytics-card {
+  margin-top: 1.5rem;
+  border-radius: 8px;
+}
+
+.analytics-stat-card {
+  height: 100%;
+  text-align: center;
+  border-radius: 8px;
+}
+
+.stat-trend {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.stat-trend.positive {
+  color: #2ecc71;
+}
+
+.stat-trend.negative {
+  color: #e74c3c;
+}
+
+@media (max-width: 576px) {
+  .stats-row .ant-col {
+    margin-bottom: 1rem;
   }
 }
 

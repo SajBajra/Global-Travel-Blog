@@ -40,6 +40,7 @@ const ManageDestinations = () => {
   const [form] = Form.useForm()
   const [imageUrl, setImageUrl] = useState("")
   const [previewImage, setPreviewImage] = useState("")
+  const [fileList, setFileList] = useState([])
 
   useEffect(() => {
     fetchDestinations()
@@ -70,10 +71,23 @@ const ManageDestinations = () => {
       })
       setImageUrl(destination.imageUrl)
       setPreviewImage(destination.imageUrl)
+      setFileList(
+        destination.imageUrl
+          ? [
+              {
+                uid: "-1",
+                name: "image.png",
+                status: "done",
+                url: destination.imageUrl,
+              },
+            ]
+          : [],
+      )
     } else {
       form.resetFields()
       setImageUrl("")
       setPreviewImage("")
+      setFileList([])
     }
     setIsModalVisible(true)
   }
@@ -82,6 +96,7 @@ const ManageDestinations = () => {
     setIsModalVisible(false)
     setEditingDestination(null)
     form.resetFields()
+    setFileList([])
   }
 
   const handleDelete = async (id) => {
@@ -97,11 +112,22 @@ const ManageDestinations = () => {
 
   const handleImageChange = (info) => {
     if (info.file.status === "uploading") {
+      setFileList(info.fileList)
       return
     }
-    if (info.file.status === "done") {
-      // In a real app, you would get the URL from the server
-      // For this example, we'll use a FileReader to create a data URL
+
+    if (info.file.status === "done" || info.file.status === "error") {
+      setFileList(info.fileList)
+    }
+
+    if (info.file.status === "removed") {
+      setPreviewImage("")
+      setImageUrl("")
+      setFileList([])
+      return
+    }
+
+    if (info.file.originFileObj) {
       const reader = new FileReader()
       reader.addEventListener("load", () => {
         setPreviewImage(reader.result)
@@ -199,13 +225,6 @@ const ManageDestinations = () => {
     },
   ]
 
-  const uploadButton = (
-    <div>
-      <UploadOutlined />
-      <div style={{ marginTop: 8 }}>Upload</div>
-    </div>
-  )
-
   return (
     <div className="admin-manage-page">
       <Row justify="space-between" align="middle" className="page-header">
@@ -241,6 +260,7 @@ const ManageDestinations = () => {
               </div>
             ),
           }}
+          responsive
         />
       </Card>
 
@@ -253,7 +273,7 @@ const ManageDestinations = () => {
       >
         <Form form={form} layout="vertical" onFinish={handleSubmit}>
           <Row gutter={16}>
-            <Col span={12}>
+            <Col xs={24} md={12}>
               <Form.Item
                 name="name"
                 label="Destination Name"
@@ -262,7 +282,7 @@ const ManageDestinations = () => {
                 <Input placeholder="Enter destination name" />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} md={12}>
               <Form.Item name="country" label="Country" rules={[{ required: true, message: "Please enter country" }]}>
                 <Input placeholder="Enter country" />
               </Form.Item>
@@ -278,12 +298,12 @@ const ManageDestinations = () => {
           </Form.Item>
 
           <Row gutter={16}>
-            <Col span={12}>
+            <Col xs={24} md={12}>
               <Form.Item name="climate" label="Climate">
                 <Input placeholder="Enter climate" />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} md={12}>
               <Form.Item name="bestTimeToVisit" label="Best Time to Visit">
                 <Input placeholder="Enter best time to visit" />
               </Form.Item>
@@ -317,29 +337,27 @@ const ManageDestinations = () => {
               </>
             )}
           </Form.List>
-
           <Form.Item label="Destination Image" rules={[{ required: true, message: "Please upload an image" }]}>
-            <Upload
-              name="image"
-              listType="picture-card"
-              showUploadList={false}
-              beforeUpload={(file) => {
-                // Return false to prevent automatic upload
-                return false
-              }}
-              onChange={handleImageChange}
-            >
-              {previewImage ? (
-                <img
-                  src={previewImage || "/placeholder.svg"}
-                  alt="Preview"
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                />
-              ) : (
-                uploadButton
-              )}
-            </Upload>
-          </Form.Item>
+  <Upload
+    name="image"
+    listType="picture-card"
+    fileList={fileList}
+    onChange={handleImageChange}
+    onRemove={() => {
+      setPreviewImage("")
+      setImageUrl("")
+      setFileList([])
+    }}
+  >
+    {fileList.length >= 1 ? null : (
+      <div>
+        <UploadOutlined />
+        <div style={{ marginTop: 8 }}>Upload</div>
+      </div>
+    )}
+  </Upload>
+</Form.Item>
+
 
           <Form.Item>
             <Space>

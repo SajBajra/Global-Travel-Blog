@@ -10,10 +10,12 @@
 
 .ant-table-wrapper {
   margin-bottom: 24px;
+  overflow-x: auto;
 }
 
 .ant-card {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
 }
 
 .ant-descriptions-item-label {
@@ -275,6 +277,13 @@
   margin-top: 2rem;
 }
 
+/* Responsive styles */
+@media (max-width: 992px) {
+  .admin-manage-page {
+    padding: 1.5rem 1rem;
+  }
+}
+
 @media (max-width: 768px) {
   .page-header {
     flex-direction: column;
@@ -283,6 +292,11 @@
 
   .page-header .ant-col:last-child {
     margin-top: 16px;
+    width: 100%;
+  }
+
+  .page-header .ant-col:last-child .ant-btn {
+    width: 100%;
   }
 
   .ant-table-wrapper {
@@ -325,6 +339,33 @@
 
   .blog-detail-content {
     padding: 1.5rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .admin-manage-page {
+    padding: 1rem 0.5rem;
+  }
+
+  .ant-card-body {
+    padding: 12px;
+  }
+
+  .ant-table-cell {
+    padding: 8px;
+  }
+
+  .ant-space {
+    gap: 4px !important;
+  }
+
+  .ant-btn {
+    padding: 0 8px;
+    font-size: 12px;
+  }
+
+  .ant-btn > .anticon + span {
+    margin-left: 4px;
   }
 }
 
