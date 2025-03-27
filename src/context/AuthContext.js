@@ -1,5 +1,3 @@
-"use client"
-
 import { createContext, useState, useEffect } from "react"
 import axios from "axios"
 import { toast } from "react-toastify"
@@ -62,7 +60,6 @@ export const AuthProvider = ({ children }) => {
 
   const signup = async (name, email, password) => {
     try {
-      // Check if user already exists
       const checkUser = await axios.get(`http://localhost:3001/users?email=${email}`)
 
       if (checkUser.data.length > 0) {
@@ -112,8 +109,6 @@ export const AuthProvider = ({ children }) => {
   }
 
   const uploadProfilePicture = async (file) => {
-    // In a real app, you would upload to a server
-    // For this example, we'll simulate by creating a data URL
     return new Promise((resolve) => {
       const reader = new FileReader()
       reader.onloadend = async () => {

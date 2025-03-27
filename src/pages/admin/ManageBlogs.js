@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import axios from "axios"
 import { toast } from "react-toastify"
@@ -18,8 +16,9 @@ import {
   Badge,
   Drawer,
   Descriptions,
+  Tooltip,
 } from "antd"
-import { CheckCircleOutlined, CloseCircleOutlined, DeleteOutlined, EyeOutlined } from "@ant-design/icons"
+import { DeleteOutlined, EyeOutlined } from "@ant-design/icons"
 import "./AdminPages.css"
 
 const { Title, Text, Paragraph } = Typography
@@ -33,6 +32,7 @@ const ManageBlogs = () => {
   const [drawerVisible, setDrawerVisible] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState("")
   const [filterStatus, setFilterStatus] = useState("")
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -53,6 +53,15 @@ const ManageBlogs = () => {
     }
 
     fetchData()
+
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth)
+    }
+
+    window.addEventListener("resize", handleResize)
+    return () => {
+      window.removeEventListener("resize", handleResize)
+    }
   }, [])
 
   const showDrawer = (blog) => {
@@ -62,36 +71,6 @@ const ManageBlogs = () => {
 
   const closeDrawer = () => {
     setDrawerVisible(false)
-  }
-
-  const handleApproveBlog = async (id) => {
-    try {
-      await axios.patch(`http://localhost:3001/blogs/${id}`, { status: "approved" })
-      setBlogs((prev) => prev.map((blog) => (blog.id === id ? { ...blog, status: "approved" } : blog)))
-      toast.success("Blog approved successfully")
-
-      if (selectedBlog && selectedBlog.id === id) {
-        setSelectedBlog((prev) => ({ ...prev, status: "approved" }))
-      }
-    } catch (error) {
-      console.error("Error approving blog:", error)
-      toast.error("Failed to approve blog")
-    }
-  }
-
-  const handleRejectBlog = async (id) => {
-    try {
-      await axios.patch(`http://localhost:3001/blogs/${id}`, { status: "rejected" })
-      setBlogs((prev) => prev.map((blog) => (blog.id === id ? { ...blog, status: "rejected" } : blog)))
-      toast.success("Blog rejected")
-
-      if (selectedBlog && selectedBlog.id === id) {
-        setSelectedBlog((prev) => ({ ...prev, status: "rejected" }))
-      }
-    } catch (error) {
-      console.error("Error rejecting blog:", error)
-      toast.error("Failed to reject blog")
-    }
   }
 
   const handleDeleteBlog = async (id) => {
@@ -144,77 +123,96 @@ const ManageBlogs = () => {
     }
   }
 
-  const columns = [
-    {
-      title: "Image",
-      dataIndex: "imageUrl",
-      key: "imageUrl",
-      render: (imageUrl) => (
-        <Image src={imageUrl || "/placeholder.svg"} alt="Blog" width={80} height={60} style={{ objectFit: "cover" }} />
-      ),
-    },
-    {
-      title: "Title",
-      dataIndex: "title",
-      key: "title",
-      sorter: (a, b) => a.title.localeCompare(b.title),
-    },
-    {
-      title: "Author",
-      dataIndex: "authorName",
-      key: "authorName",
-    },
-    {
-      title: "Category",
-      dataIndex: "category",
-      key: "category",
-      render: (category) => <Tag color="blue">{category}</Tag>,
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (status) => getStatusBadge(status),
-    },
-    {
-      title: "Date",
-      dataIndex: "createdAt",
-      key: "createdAt",
-      render: (date) => new Date(date).toLocaleDateString(),
-      sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      render: (_, record) => (
-        <Space size="small">
-          <Button icon={<EyeOutlined />} onClick={() => showDrawer(record)}>
-            View
-          </Button>
-          {record.status === "pending" && (
-            <>
-              <Button type="primary" icon={<CheckCircleOutlined />} onClick={() => handleApproveBlog(record.id)}>
-                Approve
-              </Button>
-              <Button danger icon={<CloseCircleOutlined />} onClick={() => handleRejectBlog(record.id)}>
-                Reject
-              </Button>
-            </>
-          )}
-          <Popconfirm
-            title="Are you sure you want to delete this blog?"
-            onConfirm={() => handleDeleteBlog(record.id)}
-            okText="Yes"
-            cancelText="No"
-          >
-            <Button type="primary" danger icon={<DeleteOutlined />}>
-              Delete
-            </Button>
-          </Popconfirm>
-        </Space>
-      ),
-    },
-  ]
+  const getColumns = () => {
+    const baseColumns = [
+      {
+        title: "Image",
+        dataIndex: "imageUrl",
+        key: "imageUrl",
+        render: (imageUrl) => (
+          <Image
+            src={imageUrl || "/placeholder.svg"}
+            alt="Blog"
+            width={80}
+            height={60}
+            style={{ objectFit: "cover" }}
+          />
+        ),
+        responsive: ["md"],
+      },
+      {
+        title: "Title",
+        dataIndex: "title",
+        key: "title",
+        sorter: (a, b) => a.title.localeCompare(b.title),
+        ellipsis: true,
+      },
+      {
+        title: "Author",
+        dataIndex: "authorName",
+        key: "authorName",
+        responsive: ["lg"],
+      },
+      {
+        title: "Category",
+        dataIndex: "category",
+        key: "category",
+        render: (category) => <Tag color="blue">{category}</Tag>,
+        responsive: ["md"],
+      },
+      {
+        title: "Date",
+        dataIndex: "createdAt",
+        key: "createdAt",
+        render: (date) => new Date(date).toLocaleDateString(),
+        sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+        responsive: ["lg"],
+      },
+      {
+        title: "Actions",
+        key: "actions",
+        render: (_, record) => (
+          <Space size="small" wrap>
+            {windowWidth <= 576 ? (
+              <>
+                <Tooltip title="View">
+                  <Button icon={<EyeOutlined />} onClick={() => showDrawer(record)} size="small" />
+                </Tooltip>
+                <Tooltip title="Delete">
+                  <Popconfirm
+                    title="Delete this blog?"
+                    onConfirm={() => handleDeleteBlog(record.id)}
+                    okText="Yes"
+                    cancelText="No"
+                  >
+                    <Button type="primary" danger icon={<DeleteOutlined />} size="small" />
+                  </Popconfirm>
+                </Tooltip>
+              </>
+            ) : (
+              <>
+                <Button icon={<EyeOutlined />} onClick={() => showDrawer(record)}>
+                  {windowWidth > 768 ? "View" : ""}
+                </Button>
+                <Popconfirm
+                  title="Are you sure you want to delete this blog?"
+                  onConfirm={() => handleDeleteBlog(record.id)}
+                  okText="Yes"
+                  cancelText="No"
+                >
+                  <Button type="primary" danger icon={<DeleteOutlined />}>
+                    {windowWidth > 768 ? "Delete" : ""}
+                  </Button>
+                </Popconfirm>
+              </>
+            )}
+          </Space>
+        ),
+      },
+    ]
+
+    return baseColumns
+  }
 
   return (
     <div className="admin-manage-page">
@@ -222,11 +220,11 @@ const ManageBlogs = () => {
         <Col>
           <Title level={2}>Manage Blogs</Title>
         </Col>
-        <Col>
-          <Space>
+        <Col xs={24} md={12} lg={8}>
+          <Space direction={windowWidth < 768 ? "vertical" : "horizontal"} style={{ width: "100%" }}>
             <Select
               placeholder="Filter by Category"
-              style={{ width: 200 }}
+              style={{ width: "100%" }}
               allowClear
               onChange={setSelectedCategory}
               value={selectedCategory}
@@ -239,12 +237,11 @@ const ManageBlogs = () => {
             </Select>
             <Select
               placeholder="Filter by Status"
-              style={{ width: 200 }}
+              style={{ width: "100%" }}
               allowClear
               onChange={setFilterStatus}
               value={filterStatus}
             >
-              <Option value="pending">Pending</Option>
               <Option value="approved">Approved</Option>
               <Option value="rejected">Rejected</Option>
             </Select>
@@ -253,7 +250,18 @@ const ManageBlogs = () => {
       </Row>
 
       <Card>
-        <Table columns={columns} dataSource={filteredBlogs} rowKey="id" loading={loading} />
+        <Table
+          columns={getColumns()}
+          dataSource={filteredBlogs}
+          rowKey="id"
+          loading={loading}
+          scroll={{ x: "max-content" }}
+          pagination={{
+            responsive: true,
+            showSizeChanger: windowWidth > 576,
+            defaultPageSize: windowWidth <= 576 ? 5 : 10,
+          }}
+        />
       </Card>
 
       <Drawer
@@ -261,23 +269,9 @@ const ManageBlogs = () => {
         placement="right"
         onClose={closeDrawer}
         open={drawerVisible}
-        width={600}
+        width={windowWidth < 768 ? "100%" : 600}
         extra={
           <Space>
-            {selectedBlog && selectedBlog.status === "pending" && (
-              <>
-                <Button
-                  type="primary"
-                  icon={<CheckCircleOutlined />}
-                  onClick={() => handleApproveBlog(selectedBlog.id)}
-                >
-                  Approve
-                </Button>
-                <Button danger icon={<CloseCircleOutlined />} onClick={() => handleRejectBlog(selectedBlog.id)}>
-                  Reject
-                </Button>
-              </>
-            )}
             <Popconfirm
               title="Are you sure you want to delete this blog?"
               onConfirm={() => {
@@ -304,7 +298,12 @@ const ManageBlogs = () => {
               />
             </div>
 
-            <Descriptions title="Blog Information" bordered column={1}>
+            <Descriptions
+              title="Blog Information"
+              bordered
+              column={1}
+              layout={windowWidth < 576 ? "vertical" : "horizontal"}
+            >
               <Descriptions.Item label="Title">{selectedBlog.title}</Descriptions.Item>
               <Descriptions.Item label="Author">{selectedBlog.authorName}</Descriptions.Item>
               <Descriptions.Item label="Date">

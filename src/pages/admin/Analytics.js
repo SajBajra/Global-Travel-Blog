@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import axios from "axios"
 import { Card, Row, Col, Statistic, Typography, Table, DatePicker, Spin, Select, Space } from "antd"
@@ -235,6 +233,7 @@ const Analytics = () => {
                     "rgba(255, 206, 86, 0.6)",
                     "rgba(75, 192, 192, 0.6)",
                     "rgba(153, 102, 255, 0.6)",
+                    "rgba(255, 102, 235, 0.6)",
                 ],
                 borderColor: [
                     "rgba(255, 99, 132, 1)",
@@ -242,6 +241,7 @@ const Analytics = () => {
                     "rgba(255, 206, 86, 1)",
                     "rgba(75, 192, 192, 1)",
                     "rgba(153, 102, 255, 1)",
+                    "rgba(255, 102, 235, 0.6)",
                 ],
                 borderWidth: 1,
             },

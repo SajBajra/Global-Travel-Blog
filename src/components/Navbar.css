@@ -90,7 +90,6 @@
   color: var(--text-color);
 }
 
-/* Profile Menu */
 .profile-menu-container {
   display: flex;
   align-items: center;
@@ -232,7 +231,6 @@
   background-color: var(--primary-dark);
 }
 
-/* Mobile Responsive */
 .mobile-only {
   display: none;
 }

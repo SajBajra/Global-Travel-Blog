@@ -15,7 +15,7 @@ import AdminLayout from "./components/admin/AdminLayout"
 import Home from "./pages/Home"
 import Destinations from "./pages/Destinations"
 import Blogs from "./pages/Blogs"
-import SingleBlog from "./pages/SingleBlog" // Import the new SingleBlog component
+import SingleBlog from "./pages/SingleBlog" 
 import CreateBlog from "./pages/CreateBlog"
 import Profile from "./pages/Profile"
 import Login from "./pages/Login"

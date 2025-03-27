@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useContext, useEffect } from "react"
 import { Link, useNavigate, useLocation } from "react-router"
 import { AuthContext } from "../context/AuthContext"
@@ -13,7 +11,6 @@ const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
 
-  // Close mobile menu when route changes
   useEffect(() => {
     setMenuOpen(false)
     setProfileOpen(false)

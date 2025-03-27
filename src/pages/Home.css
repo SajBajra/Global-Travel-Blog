@@ -1,8 +1,6 @@
 .home-page {
   width: 100%;
 }
-
-/* Loading Animation */
 .loading-container {
   display: flex;
   flex-direction: column;
@@ -26,8 +24,6 @@
     transform: rotate(360deg);
   }
 }
-
-/* Hero Section */
 .hero-section {
   background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("https://images.unsplash.com/photo-1578469645742-46cae010e5d4?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");
   background-size: cover;
@@ -95,7 +91,6 @@
   }
 }
 
-/* Section Headers */
 .section-header {
   text-align: center;
   margin-bottom: 3rem;
@@ -114,7 +109,7 @@
   width: 50px;
   height: 3px;
   background-color: var(--primary-color);
-  bottom: -10px;
+  bottom: -6px;
   left: 50%;
   transform: translateX(-50%);
 }
@@ -124,7 +119,6 @@
   font-size: 1.1rem;
 }
 
-/* Featured Destinations */
 .featured-destinations,
 .recent-blogs {
   padding: 4rem 1rem;
@@ -205,7 +199,6 @@
   color: var(--primary-color);
 }
 
-/* Blog Cards */
 .blog-card {
   border-radius: 10px;
   overflow: hidden;
@@ -272,7 +265,6 @@
   flex-grow: 1;
 }
 
-/* CTA Section */
 .cta-section {
   background: url("https://images.unsplash.com/photo-1488085061387-422e29b40080?q=80&w=1931&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D") no-repeat center center;
   color: white;
@@ -311,7 +303,6 @@
   background-color: rgba(255, 255, 255, 0.9);
 }
 
-/* Contact Section */
 .contact-section {
   padding: 4rem 1rem;
   max-width: 1200px;
@@ -371,7 +362,6 @@
   margin-top: 2rem;
 }
 
-/* Responsive Design */
 @media (max-width: 1024px) {
   .destinations-grid,
   .blogs-grid {

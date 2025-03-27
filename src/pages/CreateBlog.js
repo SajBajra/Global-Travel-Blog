@@ -1,7 +1,5 @@
-"use client"
-
 import { useState, useEffect, useContext } from "react"
-import { useNavigate } from "react-router"
+import { useNavigate } from "react-router-dom"
 import axios from "axios"
 import { toast } from "react-toastify"
 import { AuthContext } from "../context/AuthContext"
@@ -76,11 +74,12 @@ const CreateBlog = () => {
         authorId: currentUser.id,
         authorName: currentUser.name,
         createdAt: new Date().toISOString(),
-        status: "pending", // Blogs need admin approval
+        status: "approved", // Blogs are now automatically approved
+        likes: 0,
       }
 
       await axios.post("http://localhost:3001/blogs", blogData)
-      toast.success("Blog submitted for approval")
+      toast.success("Blog published successfully")
       navigate("/blogs")
     } catch (error) {
       console.error("Error creating blog:", error)
@@ -152,7 +151,7 @@ const CreateBlog = () => {
 
         <div className="form-actions">
           <button type="submit" className="btn btn-primary" disabled={submitting}>
-            {submitting ? "Submitting..." : "Submit Blog"}
+            {submitting ? "Publishing..." : "Publish Blog"}
           </button>
         </div>
       </form>
