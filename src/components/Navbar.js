@@ -1,17 +1,39 @@
 "use client"
 
-import { useContext } from "react"
-import { Link, useNavigate } from "react-router"
+import { useState, useContext, useEffect } from "react"
+import { Link, useNavigate, useLocation } from "react-router"
 import { AuthContext } from "../context/AuthContext"
+import { FaBars, FaTimes, FaChevronDown, FaSignOutAlt, FaUser, FaPen, FaCog } from "react-icons/fa"
 import "./Navbar.css"
 
 const Navbar = () => {
   const { currentUser, isAdmin, logout } = useContext(AuthContext)
   const navigate = useNavigate()
+  const location = useLocation()
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
+
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setMenuOpen(false)
+    setProfileOpen(false)
+  }, [location.pathname])
 
   const handleLogout = () => {
     logout()
     navigate("/")
+  }
+
+  const toggleMenu = () => {
+    setMenuOpen(!menuOpen)
+  }
+
+  const toggleProfile = () => {
+    setProfileOpen(!profileOpen)
+  }
+
+  const isActive = (path) => {
+    return location.pathname === path
   }
 
   return (
@@ -21,56 +43,115 @@ const Navbar = () => {
           Global Travel Blog
         </Link>
 
-        <ul className="nav-menu">
+        <div className="menu-icon" onClick={toggleMenu}>
+          {menuOpen ? <FaTimes /> : <FaBars />}
+        </div>
+
+        <ul className={`nav-menu ${menuOpen ? "active" : ""}`}>
           <li className="nav-item">
-            <Link to="/" className="nav-link">
+            <Link to="/" className={`nav-link ${isActive("/") ? "active" : ""}`}>
               Home
             </Link>
           </li>
           <li className="nav-item">
-            <Link to="/destinations" className="nav-link">
+            <Link to="/destinations" className={`nav-link ${isActive("/destinations") ? "active" : ""}`}>
               Destinations
             </Link>
           </li>
           <li className="nav-item">
-            <Link to="/blogs" className="nav-link">
+            <Link to="/blogs" className={`nav-link ${isActive("/blogs") ? "active" : ""}`}>
               Blogs
             </Link>
           </li>
 
+          {currentUser && (
+            <li className="nav-item mobile-only">
+              <Link to="/create-blog" className={`nav-link ${isActive("/create-blog") ? "active" : ""}`}>
+                Write Blog
+              </Link>
+            </li>
+          )}
+
+          {currentUser && (
+            <li className="nav-item mobile-only">
+              <Link to="/profile" className={`nav-link ${isActive("/profile") ? "active" : ""}`}>
+                Profile
+              </Link>
+            </li>
+          )}
+
+          {isAdmin && (
+            <li className="nav-item mobile-only">
+              <Link to="/admin" className={`nav-link admin-link ${isActive("/admin") ? "active" : ""}`}>
+                Admin
+              </Link>
+            </li>
+          )}
+
           {currentUser ? (
-            <>
-              <li className="nav-item">
-                <Link to="/create-blog" className="nav-link">
-                  Write Blog
-                </Link>
-              </li>
-              <li className="nav-item">
-                <Link to="/profile" className="nav-link">
-                  Profile
-                </Link>
-              </li>
-              {isAdmin && (
-                <li className="nav-item">
-                  <Link to="/admin" className="nav-link admin-link">
-                    Admin
-                  </Link>
-                </li>
-              )}
-              <li className="nav-item">
-                <button onClick={handleLogout} className="nav-link logout-btn">
-                  Logout
-                </button>
-              </li>
-            </>
+            <li className="nav-item mobile-only">
+              <button onClick={handleLogout} className="nav-link logout-btn">
+                Logout
+              </button>
+            </li>
           ) : (
-            <li className="nav-item">
-              <Link to="/login" className="nav-link">
+            <li className="nav-item mobile-only">
+              <Link to="/login" className={`nav-link ${isActive("/login") ? "active" : ""}`}>
                 Login
               </Link>
             </li>
           )}
         </ul>
+
+        {currentUser ? (
+          <div className="profile-menu-container">
+            {currentUser && (
+              <Link to="/create-blog" className="write-blog-btn desktop-only">
+                <FaPen /> Write
+              </Link>
+            )}
+            <div className="profile-menu">
+              <div className="profile-trigger" onClick={toggleProfile}>
+                <img
+                  src={currentUser.profilePic || "/default-profile.jpg"}
+                  alt={currentUser.name}
+                  className="profile-avatar"
+                />
+                <FaChevronDown className="dropdown-icon" />
+              </div>
+              <div className={`profile-dropdown ${profileOpen ? "show" : ""}`}>
+                <div className="profile-header">
+                  <img
+                    src={currentUser.profilePic || "/default-profile.jpg"}
+                    alt={currentUser.name}
+                    className="dropdown-avatar"
+                  />
+                  <div className="profile-info">
+                    <h4>{currentUser.name}</h4>
+                    <p>{currentUser.email}</p>
+                  </div>
+                </div>
+                <div className="profile-menu-items">
+                  <Link to="/profile" className="profile-menu-item">
+                    <FaUser /> My Profile
+                  </Link>
+                  {isAdmin && (
+                    <Link to="/admin" className="profile-menu-item">
+                      <FaCog /> Admin Dashboard
+                    </Link>
+                  )}
+                  <button onClick={handleLogout} className="profile-menu-item logout">
+                    <FaSignOutAlt /> Logout
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <Link to="/login" className="login-btn desktop-only">
+            Login
+          </Link>
+        )}
       </div>
     </nav>
   )

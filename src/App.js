@@ -9,6 +9,7 @@ import Navbar from "./components/Navbar"
 import Footer from "./components/Footer"
 import ProtectedRoute from "./components/ProtectedRoute"
 import AdminRoute from "./components/AdminRoute"
+import AdminLayout from "./components/admin/AdminLayout"
 
 // Pages
 import Home from "./pages/Home"
@@ -23,6 +24,10 @@ import AdminPanel from "./pages/AdminPanel"
 import ManageDestinations from "./pages/admin/ManageDestinations"
 import ManageBlogs from "./pages/admin/ManageBlogs"
 import ManageUsers from "./pages/admin/ManageUsers"
+import ManageCategories from "./pages/admin/ManageCategories"
+import ManageReports from "./pages/admin/ManageReports"
+import Analytics from "./pages/admin/Analytics"
+
 
 // Context
 import { AuthProvider } from "./context/AuthContext"
@@ -47,12 +52,19 @@ function App() {
                 <Route path="/profile" element={<Profile />} />
               </Route>
               {/* Admin Routes */}
-              <Route element={<AdminRoute />}>
-                <Route path="/admin" element={<AdminPanel />} />
-                <Route path="/admin/destinations" element={<ManageDestinations />} />
-                <Route path="/admin/blogs" element={<ManageBlogs />} />
-                <Route path="/admin/users" element={<ManageUsers />} />
-              </Route>
+              {/* Admin Routes with AdminLayout */}
+          <Route element={<AdminRoute />}>
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<AdminPanel />} />
+              <Route path="destinations" element={<ManageDestinations />} />
+              <Route path="blogs" element={<ManageBlogs />} />
+              <Route path="users" element={<ManageUsers />} />
+              <Route path="categories" element={<ManageCategories />} />
+              <Route path="reports" element={<ManageReports />} />
+              <Route path="analytics" element={<Analytics />} />
+            </Route>
+          </Route>
+
             </Routes>
           </main>
           <Footer />
