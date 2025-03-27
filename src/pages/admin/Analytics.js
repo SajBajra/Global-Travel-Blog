@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import axios from "axios"
 import { Card, Row, Col, Statistic, Typography, Table, Spin, Select, Space } from "antd"

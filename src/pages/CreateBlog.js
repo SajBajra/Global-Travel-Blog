@@ -47,8 +47,6 @@ const CreateBlog = () => {
   const handleImageChange = (e) => {
     const file = e.target.files[0]
     if (file) {
-      // In a real app, you would upload to a server
-      // For this example, we'll simulate by creating a data URL
       const reader = new FileReader()
       reader.onloadend = () => {
         setPreviewImage(reader.result)

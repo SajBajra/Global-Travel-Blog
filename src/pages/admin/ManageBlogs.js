@@ -216,38 +216,38 @@ const ManageBlogs = () => {
 
   return (
     <div className="admin-manage-page">
-      <Row justify="space-between" align="middle" className="page-header">
-        <Col>
-          <Title level={2}>Manage Blogs</Title>
-        </Col>
-        <Col xs={24} md={12} lg={8}>
-          <Space direction={windowWidth < 768 ? "vertical" : "horizontal"} style={{ width: "100%" }}>
-            <Select
-              placeholder="Filter by Category"
-              style={{ width: "100%" }}
-              allowClear
-              onChange={setSelectedCategory}
-              value={selectedCategory}
-            >
-              {categories.map((category) => (
-                <Option key={category.id} value={category.name}>
-                  {category.name}
-                </Option>
-              ))}
-            </Select>
-            <Select
-              placeholder="Filter by Status"
-              style={{ width: "100%" }}
-              allowClear
-              onChange={setFilterStatus}
-              value={filterStatus}
-            >
-              <Option value="approved">Approved</Option>
-              <Option value="rejected">Rejected</Option>
-            </Select>
-          </Space>
-        </Col>
-      </Row>
+<Row justify="space-between" align="middle" className="page-header">
+  <Col>
+    <Title level={2}>Manage Blogs</Title>
+  </Col>
+  <Col xs={24} md={12} lg={8} style={{ display: "flex", justifyContent: "end" }}>
+    <Space
+      direction={windowWidth < 768 ? "vertical" : "horizontal"}
+      style={{ width: "100%", maxWidth: "300px" }}
+    >
+      <Select
+        placeholder="Filter by Category"
+        style={{ minWidth: "200px", width: "100%" }}
+        allowClear
+        onChange={(value) => {
+          if (value === "All") {
+            setSelectedCategory(null);  // Clears the selected category if "All" is chosen
+          } else {
+            setSelectedCategory(value); // Otherwise set the selected category
+          }
+        }}
+        value={selectedCategory || undefined} // 'undefined' will let the select show as if nothing is selected
+      >
+        <Option key="all" value="All">All</Option>
+        {categories.map((category) => (
+          <Option key={category.id} value={category.name}>
+            {category.name}
+          </Option>
+        ))}
+      </Select>
+    </Space>
+  </Col>
+</Row>
 
       <Card>
         <Table
