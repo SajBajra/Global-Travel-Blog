@@ -34,21 +34,24 @@
 
 .destinations-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 2rem;
 }
 
 .destination-card {
-  display: grid;
-  grid-template-columns: 1fr 2fr;
+  display: flex; /* Use flexbox for the layout */
+  flex-direction: column; /* Stack the image on top and content below */
   background-color: white;
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  position: relative; /* To position the hover effect correctly */
 }
 
 .destination-image {
-  height: 100%;
+  width: 100%; /* Ensure image takes up full width */
+  height: 200px; /* Fixed height for the image */
+  overflow: hidden;
 }
 
 .destination-image img {
@@ -70,6 +73,14 @@
   color: var(--primary-color);
   font-weight: 500;
   margin-bottom: 1rem;
+  visibility: hidden; /* Initially hide the country name */
+  opacity: 0;
+  transition: visibility 0s, opacity 0.5s ease-in-out; /* Smooth transition */
+}
+
+.destination-card:hover .destination-location {
+  visibility: visible; /* Show the country name on hover */
+  opacity: 1;
 }
 
 .destination-description {
@@ -113,11 +124,11 @@
 
 @media (max-width: 768px) {
   .destination-card {
-    grid-template-columns: 1fr;
+    flex-direction: column; /* Stack image and content vertically */
   }
 
   .destination-image {
-    height: 200px;
+    height: 200px; /* Fixed height for smaller screens */
   }
 
   .destination-content {
@@ -129,4 +140,3 @@
     gap: 0.5rem;
   }
 }
-
