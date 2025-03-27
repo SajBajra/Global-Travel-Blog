@@ -97,6 +97,8 @@
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
   font-size: 0.8rem;
+  width: auto;  
+  max-width: 30%;    
 }
 
 .blog-content {
