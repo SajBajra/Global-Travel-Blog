@@ -3,11 +3,27 @@
 import { useState, useEffect } from "react"
 import axios from "axios"
 import { toast } from "react-toastify"
-import { Table, Button, Space, Typography, Card, Row, Col, Tag, Badge, Drawer, Descriptions, Tabs } from "antd"
-import { CheckCircleOutlined, CloseCircleOutlined, EyeOutlined } from "@ant-design/icons"
+import {
+  Table,
+  Button,
+  Space,
+  Typography,
+  Card,
+  Row,
+  Col,
+  Tag,
+  Badge,
+  Drawer,
+  Descriptions,
+  Tabs,
+  Divider,
+  Alert,
+} from "antd"
+import { CheckCircleOutlined, CloseCircleOutlined, EyeOutlined, DeleteOutlined, LinkOutlined } from "@ant-design/icons"
+import { Link } from "react-router-dom"
 import "./AdminPages.css"
 
-const { Title, Text } = Typography
+const { Title, Text, Paragraph } = Typography
 const { TabPane } = Tabs
 
 const ManageReports = () => {
@@ -17,9 +33,11 @@ const ManageReports = () => {
   const [drawerVisible, setDrawerVisible] = useState(false)
   const [reportContent, setReportContent] = useState(null)
   const [activeTab, setActiveTab] = useState("pending")
+  const [users, setUsers] = useState([])
 
   useEffect(() => {
     fetchReports()
+    fetchUsers()
   }, [])
 
   const fetchReports = async () => {
@@ -32,6 +50,20 @@ const ManageReports = () => {
     } finally {
       setLoading(false)
     }
+  }
+
+  const fetchUsers = async () => {
+    try {
+      const response = await axios.get("http://localhost:3001/users")
+      setUsers(response.data)
+    } catch (error) {
+      console.error("Error fetching users:", error)
+    }
+  }
+
+  const getUserName = (userId) => {
+    const user = users.find((u) => u.id === userId)
+    return user ? user.name : `User ${userId}`
   }
 
   const showDrawer = async (report) => {
@@ -53,12 +85,18 @@ const ManageReports = () => {
           setReportContent((prev) => ({
             ...prev,
             blogTitle: blogResponse.data.title,
+            blogId: blogResponse.data.id,
           }))
         }
       }
     } catch (error) {
       console.error("Error fetching reported content:", error)
-      toast.error("Failed to load reported content")
+      if (error.response && error.response.status === 404) {
+        setReportContent({ notFound: true })
+        toast.error("The reported content has already been deleted")
+      } else {
+        toast.error("Failed to load reported content")
+      }
     }
   }
 
@@ -71,10 +109,23 @@ const ManageReports = () => {
   const handleApproveReport = async (id) => {
     try {
       // Update report status
-      await axios.patch(`http://localhost:3001/reports/${id}`, { status: "resolved" })
+      await axios.patch(`http://localhost:3001/reports/${id}`, {
+        status: "resolved",
+        resolvedAt: new Date().toISOString(),
+      })
 
       // Update local state
-      setReports(reports.map((report) => (report.id === id ? { ...report, status: "resolved" } : report)))
+      setReports(
+        reports.map((report) =>
+          report.id === id
+            ? {
+                ...report,
+                status: "resolved",
+                resolvedAt: new Date().toISOString(),
+              }
+            : report,
+        ),
+      )
 
       toast.success("Report marked as resolved")
 
@@ -82,6 +133,7 @@ const ManageReports = () => {
         setSelectedReport({
           ...selectedReport,
           status: "resolved",
+          resolvedAt: new Date().toISOString(),
         })
       }
     } catch (error) {
@@ -93,10 +145,23 @@ const ManageReports = () => {
   const handleRejectReport = async (id) => {
     try {
       // Update report status
-      await axios.patch(`http://localhost:3001/reports/${id}`, { status: "rejected" })
+      await axios.patch(`http://localhost:3001/reports/${id}`, {
+        status: "rejected",
+        resolvedAt: new Date().toISOString(),
+      })
 
       // Update local state
-      setReports(reports.map((report) => (report.id === id ? { ...report, status: "rejected" } : report)))
+      setReports(
+        reports.map((report) =>
+          report.id === id
+            ? {
+                ...report,
+                status: "rejected",
+                resolvedAt: new Date().toISOString(),
+              }
+            : report,
+        ),
+      )
 
       toast.success("Report rejected")
 
@@ -104,6 +169,7 @@ const ManageReports = () => {
         setSelectedReport({
           ...selectedReport,
           status: "rejected",
+          resolvedAt: new Date().toISOString(),
         })
       }
     } catch (error) {
@@ -117,20 +183,53 @@ const ManageReports = () => {
       if (report.type === "blog" && report.blogId) {
         // Delete the blog
         await axios.delete(`http://localhost:3001/blogs/${report.blogId}`)
-        toast.success("Blog deleted successfully")
+
+        // Also delete all comments associated with this blog
+        const commentsResponse = await axios.get(`http://localhost:3001/comments?blogId=${report.blogId}`)
+        for (const comment of commentsResponse.data) {
+          await axios.delete(`http://localhost:3001/comments/${comment.id}`)
+        }
+
+        toast.success("Blog and its comments deleted successfully")
       } else if (report.type === "comment" && report.commentId) {
         // Delete the comment
         await axios.delete(`http://localhost:3001/comments/${report.commentId}`)
-        toast.success("Comment deleted successfully")
+
+        // Also delete all replies to this comment
+        const repliesResponse = await axios.get(`http://localhost:3001/comments?parentId=${report.commentId}`)
+        for (const reply of repliesResponse.data) {
+          await axios.delete(`http://localhost:3001/comments/${reply.id}`)
+        }
+
+        toast.success("Comment and its replies deleted successfully")
       }
 
       // Update report status
-      await axios.patch(`http://localhost:3001/reports/${report.id}`, { status: "resolved" })
+      await axios.patch(`http://localhost:3001/reports/${report.id}`, {
+        status: "resolved",
+        resolvedAt: new Date().toISOString(),
+        actionTaken: "deleted",
+      })
 
       // Update local state
-      setReports(reports.map((r) => (r.id === report.id ? { ...r, status: "resolved" } : r)))
+      setReports(
+        reports.map((r) =>
+          r.id === report.id
+            ? {
+                ...r,
+                status: "resolved",
+                resolvedAt: new Date().toISOString(),
+                actionTaken: "deleted",
+              }
+            : r,
+        ),
+      )
 
-      closeDrawer()
+      setReportContent({ deleted: true })
+
+      setTimeout(() => {
+        closeDrawer()
+      }, 2000)
     } catch (error) {
       console.error("Error deleting reported content:", error)
       toast.error("Failed to delete reported content")
@@ -162,12 +261,13 @@ const ManageReports = () => {
     {
       title: "Reported By",
       key: "reportedBy",
-      render: (_, record) => <span>{record.userName || "User " + record.userId}</span>,
+      render: (_, record) => <span>{getUserName(record.userId)}</span>,
     },
     {
       title: "Reason",
       dataIndex: "reason",
       key: "reason",
+      render: (reason) => reason || "No reason provided",
     },
     {
       title: "Date",
@@ -252,47 +352,101 @@ const ManageReports = () => {
               <Descriptions.Item label="Type">
                 <Tag color={selectedReport.type === "blog" ? "blue" : "green"}>{selectedReport.type.toUpperCase()}</Tag>
               </Descriptions.Item>
-              <Descriptions.Item label="Reported By">User ID: {selectedReport.userId}</Descriptions.Item>
+              <Descriptions.Item label="Reported By">{getUserName(selectedReport.userId)}</Descriptions.Item>
               <Descriptions.Item label="Reason">{selectedReport.reason || "No reason provided"}</Descriptions.Item>
               <Descriptions.Item label="Date">{new Date(selectedReport.createdAt).toLocaleString()}</Descriptions.Item>
               <Descriptions.Item label="Status">{getStatusBadge(selectedReport.status)}</Descriptions.Item>
+              {selectedReport.resolvedAt && (
+                <Descriptions.Item label="Resolved At">
+                  {new Date(selectedReport.resolvedAt).toLocaleString()}
+                </Descriptions.Item>
+              )}
+              {selectedReport.actionTaken && (
+                <Descriptions.Item label="Action Taken">
+                  <Tag color="red">Content {selectedReport.actionTaken}</Tag>
+                </Descriptions.Item>
+              )}
             </Descriptions>
 
+            <Divider />
+
             {reportContent && (
-              <div style={{ marginTop: 24 }}>
+              <div>
                 <Title level={4}>Reported Content</Title>
 
-                {selectedReport.type === "blog" ? (
+                {reportContent.deleted && (
+                  <Alert
+                    message="Content Deleted"
+                    description="This content has been deleted successfully."
+                    type="success"
+                    showIcon
+                  />
+                )}
+
+                {reportContent.notFound && (
+                  <Alert
+                    message="Content Not Found"
+                    description="The reported content has already been deleted."
+                    type="info"
+                    showIcon
+                  />
+                )}
+
+                {!reportContent.notFound && !reportContent.deleted && (
                   <>
-                    <Descriptions bordered column={1}>
-                      <Descriptions.Item label="Blog Title">{reportContent.title}</Descriptions.Item>
-                      <Descriptions.Item label="Author">{reportContent.authorName}</Descriptions.Item>
-                    </Descriptions>
-                    <div style={{ marginTop: 16 }}>
-                      <Text strong>Content:</Text>
-                      <p>{reportContent.content}</p>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <Descriptions bordered column={1}>
-                      <Descriptions.Item label="Comment By">{reportContent.userName}</Descriptions.Item>
-                      {reportContent.blogTitle && (
-                        <Descriptions.Item label="On Blog">{reportContent.blogTitle}</Descriptions.Item>
-                      )}
-                    </Descriptions>
-                    <div style={{ marginTop: 16 }}>
-                      <Text strong>Comment Content:</Text>
-                      <p>{reportContent.content}</p>
+                    {selectedReport.type === "blog" ? (
+                      <>
+                        <Descriptions bordered column={1}>
+                          <Descriptions.Item label="Blog Title">{reportContent.title}</Descriptions.Item>
+                          <Descriptions.Item label="Author">{reportContent.authorName}</Descriptions.Item>
+                          <Descriptions.Item label="View Blog">
+                            <Link to={`/blogs/${reportContent.id}`} target="_blank">
+                              <LinkOutlined /> Open Blog in New Tab
+                            </Link>
+                          </Descriptions.Item>
+                        </Descriptions>
+                        <div style={{ marginTop: 16 }}>
+                          <Text strong>Content:</Text>
+                          <Paragraph ellipsis={{ rows: 5, expandable: true }}>{reportContent.content}</Paragraph>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <Descriptions bordered column={1}>
+                          <Descriptions.Item label="Comment By">{reportContent.userName}</Descriptions.Item>
+                          {reportContent.blogTitle && (
+                            <>
+                              <Descriptions.Item label="On Blog">{reportContent.blogTitle}</Descriptions.Item>
+                              <Descriptions.Item label="View Blog">
+                                <Link to={`/blogs/${reportContent.blogId}`} target="_blank">
+                                  <LinkOutlined /> Open Blog in New Tab
+                                </Link>
+                              </Descriptions.Item>
+                            </>
+                          )}
+                          <Descriptions.Item label="Comment Date">
+                            {new Date(reportContent.createdAt).toLocaleString()}
+                          </Descriptions.Item>
+                        </Descriptions>
+                        <div style={{ marginTop: 16 }}>
+                          <Text strong>Comment Content:</Text>
+                          <Paragraph>{reportContent.content}</Paragraph>
+                        </div>
+                      </>
+                    )}
+
+                    <div style={{ marginTop: 24 }}>
+                      <Button
+                        type="primary"
+                        danger
+                        icon={<DeleteOutlined />}
+                        onClick={() => handleDeleteReportedContent(selectedReport)}
+                      >
+                        Delete Reported Content
+                      </Button>
                     </div>
                   </>
                 )}
-
-                <div style={{ marginTop: 24 }}>
-                  <Button type="primary" danger onClick={() => handleDeleteReportedContent(selectedReport)}>
-                    Delete Reported Content
-                  </Button>
-                </div>
               </div>
             )}
           </>

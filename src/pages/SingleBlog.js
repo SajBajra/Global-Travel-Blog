@@ -33,6 +33,7 @@ const SingleBlog = () => {
   const [submitting, setSubmitting] = useState(false)
   const [liked, setLiked] = useState(false)
   const [likeCount, setLikeCount] = useState(0)
+  const [commentLikes, setCommentLikes] = useState({})
 
   const shareUrl = window.location.href
 
@@ -46,19 +47,21 @@ const SingleBlog = () => {
 
         // Check if user has liked this blog
         if (currentUser) {
-          const likesResponse = await axios.get(`http://localhost:3001/likes?userId=${currentUser.id}&blogId=${id}`)
+          const likesResponse = await axios.get(
+            `http://localhost:3001/likes?userId=${currentUser.id}&blogId=${Number.parseInt(id)}`,
+          )
           setLiked(likesResponse.data.length > 0)
         }
 
         // Fetch comments
         const commentsResponse = await axios.get(
-          `http://localhost:3001/comments?blogId=${id}&parentId=null&_sort=createdAt&_order=desc`,
+          `http://localhost:3001/comments?blogId=${Number.parseInt(id)}&parentId=null&_sort=createdAt&_order=desc`,
         )
         setComments(commentsResponse.data)
 
         // Fetch replies
         const repliesResponse = await axios.get(
-          `http://localhost:3001/comments?blogId=${id}&parentId_ne=null&_sort=createdAt&_order=asc`,
+          `http://localhost:3001/comments?blogId=${Number.parseInt(id)}&parentId_ne=null&_sort=createdAt&_order=asc`,
         )
 
         // Group replies by parent comment ID
@@ -71,6 +74,16 @@ const SingleBlog = () => {
         })
 
         setReplies(repliesMap)
+
+        // Fetch comment likes for current user
+        if (currentUser) {
+          const commentLikesResponse = await axios.get(`http://localhost:3001/commentLikes?userId=${currentUser.id}`)
+          const likesMap = {}
+          commentLikesResponse.data.forEach((like) => {
+            likesMap[like.commentId] = true
+          })
+          setCommentLikes(likesMap)
+        }
       } catch (error) {
         console.error("Error fetching data:", error)
         if (error.response && error.response.status === 404) {
@@ -97,27 +110,35 @@ const SingleBlog = () => {
     try {
       if (liked) {
         // Unlike the blog
-        const likesResponse = await axios.get(`http://localhost:3001/likes?userId=${currentUser.id}&blogId=${id}`)
+        const likesResponse = await axios.get(
+          `http://localhost:3001/likes?userId=${currentUser.id}&blogId=${Number.parseInt(id)}`,
+        )
         if (likesResponse.data.length > 0) {
           await axios.delete(`http://localhost:3001/likes/${likesResponse.data[0].id}`)
         }
-        setLiked(false)
-        setLikeCount((prev) => prev - 1)
 
-        // Update blog likes count
-        await axios.patch(`http://localhost:3001/blogs/${id}`, { likes: likeCount - 1 })
+        // Update local state
+        setLiked(false)
+        const newLikeCount = Math.max(0, likeCount - 1)
+        setLikeCount(newLikeCount)
+
+        // Update blog likes count in database
+        await axios.patch(`http://localhost:3001/blogs/${id}`, { likes: newLikeCount })
       } else {
         // Like the blog
         await axios.post(`http://localhost:3001/likes`, {
           userId: currentUser.id,
-          blogId: Number(id),
+          blogId: Number.parseInt(id),
           createdAt: new Date().toISOString(),
         })
-        setLiked(true)
-        setLikeCount((prev) => prev + 1)
 
-        // Update blog likes count
-        await axios.patch(`http://localhost:3001/blogs/${id}`, { likes: likeCount + 1 })
+        // Update local state
+        setLiked(true)
+        const newLikeCount = likeCount + 1
+        setLikeCount(newLikeCount)
+
+        // Update blog likes count in database
+        await axios.patch(`http://localhost:3001/blogs/${id}`, { likes: newLikeCount })
       }
     } catch (error) {
       console.error("Error updating like status:", error)
@@ -142,7 +163,7 @@ const SingleBlog = () => {
 
     try {
       const commentData = {
-        blogId: Number(id),
+        blogId: Number.parseInt(id),
         parentId: null,
         userId: currentUser.id,
         userName: currentUser.name,
@@ -177,7 +198,7 @@ const SingleBlog = () => {
 
     try {
       const replyData = {
-        blogId: Number(id),
+        blogId: Number.parseInt(id),
         parentId: commentId,
         userId: currentUser.id,
         userName: currentUser.name,
@@ -265,6 +286,14 @@ const SingleBlog = () => {
       } else {
         // Delete parent comment and all its replies
         setComments(comments.filter((comment) => comment.id !== commentId))
+
+        // Also delete all replies to this comment from the database
+        if (replies[commentId] && replies[commentId].length > 0) {
+          for (const reply of replies[commentId]) {
+            await axios.delete(`http://localhost:3001/comments/${reply.id}`)
+          }
+        }
+
         setReplies((prev) => {
           const newReplies = { ...prev }
           delete newReplies[commentId]
@@ -286,25 +315,34 @@ const SingleBlog = () => {
     }
 
     try {
-      // Check if user already liked this comment
-      const likesResponse = await axios.get(
-        `http://localhost:3001/commentLikes?userId=${currentUser.id}&commentId=${commentId}`,
-      )
+      const isLiked = commentLikes[commentId]
 
-      if (likesResponse.data.length > 0) {
+      if (isLiked) {
         // User already liked, so unlike
-        await axios.delete(`http://localhost:3001/commentLikes/${likesResponse.data[0].id}`)
+        const likesResponse = await axios.get(
+          `http://localhost:3001/commentLikes?userId=${currentUser.id}&commentId=${commentId}`,
+        )
+
+        if (likesResponse.data.length > 0) {
+          await axios.delete(`http://localhost:3001/commentLikes/${likesResponse.data[0].id}`)
+        }
 
         // Get current comment to update likes count
         const commentResponse = await axios.get(`http://localhost:3001/comments/${commentId}`)
         const currentLikes = commentResponse.data.likes || 0
+        const newLikeCount = Math.max(0, currentLikes - 1)
 
         // Update comment likes count
         const updatedComment = await axios.patch(`http://localhost:3001/comments/${commentId}`, {
-          likes: Math.max(0, currentLikes - 1),
+          likes: newLikeCount,
         })
 
-        // Update state
+        // Update local state
+        setCommentLikes((prev) => ({
+          ...prev,
+          [commentId]: false,
+        }))
+
         if (isReply) {
           setReplies((prev) => {
             const newReplies = { ...prev }
@@ -329,13 +367,19 @@ const SingleBlog = () => {
         // Get current comment to update likes count
         const commentResponse = await axios.get(`http://localhost:3001/comments/${commentId}`)
         const currentLikes = commentResponse.data.likes || 0
+        const newLikeCount = currentLikes + 1
 
         // Update comment likes count
         const updatedComment = await axios.patch(`http://localhost:3001/comments/${commentId}`, {
-          likes: currentLikes + 1,
+          likes: newLikeCount,
         })
 
-        // Update state
+        // Update local state
+        setCommentLikes((prev) => ({
+          ...prev,
+          [commentId]: true,
+        }))
+
         if (isReply) {
           setReplies((prev) => {
             const newReplies = { ...prev }
@@ -377,8 +421,9 @@ const SingleBlog = () => {
       await axios.post(`http://localhost:3001/reports`, {
         userId: currentUser.id,
         commentId: commentId,
-        blogId: Number(id),
+        blogId: Number.parseInt(id),
         type: "comment",
+        reason: "Inappropriate content",
         status: "pending",
         createdAt: new Date().toISOString(),
       })
@@ -399,7 +444,7 @@ const SingleBlog = () => {
     try {
       // Check if user already reported this blog
       const reportsResponse = await axios.get(
-        `http://localhost:3001/reports?userId=${currentUser.id}&blogId=${id}&type=blog`,
+        `http://localhost:3001/reports?userId=${currentUser.id}&blogId=${Number.parseInt(id)}&type=blog`,
       )
 
       if (reportsResponse.data.length > 0) {
@@ -410,8 +455,9 @@ const SingleBlog = () => {
       // Add report
       await axios.post(`http://localhost:3001/reports`, {
         userId: currentUser.id,
-        blogId: Number(id),
+        blogId: Number.parseInt(id),
         type: "blog",
+        reason: "Inappropriate content",
         status: "pending",
         createdAt: new Date().toISOString(),
       })
@@ -420,20 +466,6 @@ const SingleBlog = () => {
     } catch (error) {
       console.error("Error reporting blog:", error)
       toast.error("Failed to report blog")
-    }
-  }
-
-  const isCommentLiked = async (commentId) => {
-    if (!currentUser) return false
-
-    try {
-      const response = await axios.get(
-        `http://localhost:3001/commentLikes?userId=${currentUser.id}&commentId=${commentId}`,
-      )
-      return response.data.length > 0
-    } catch (error) {
-      console.error("Error checking comment like status:", error)
-      return false
     }
   }
 
@@ -626,7 +658,7 @@ const SingleBlog = () => {
 
                 <div className="comment-footer">
                   <button
-                    className="comment-like-btn"
+                    className={`comment-like-btn ${commentLikes[comment.id] ? "liked" : ""}`}
                     onClick={() => handleLikeComment(comment.id)}
                     aria-label="Like comment"
                   >
@@ -756,7 +788,7 @@ const SingleBlog = () => {
 
                         <div className="reply-footer">
                           <button
-                            className="comment-like-btn"
+                            className={`comment-like-btn ${commentLikes[reply.id] ? "liked" : ""}`}
                             onClick={() => handleLikeComment(reply.id, true, comment.id)}
                             aria-label="Like reply"
                           >

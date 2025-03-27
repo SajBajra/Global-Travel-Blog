@@ -281,6 +281,11 @@
   color: var(--primary-color);
 }
 
+.comment-like-btn.liked {
+  color: var(--primary-color);
+  font-weight: bold;
+}
+
 /* Reply Form */
 .reply-form {
   margin-top: 1rem;
