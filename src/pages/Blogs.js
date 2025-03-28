@@ -1,6 +1,9 @@
+"use client"
+
 import { useState, useEffect } from "react"
 import axios from "axios"
 import { Link } from "react-router-dom"
+import { FiClock } from "react-icons/fi"
 import "./Blogs.css"
 
 const Blogs = () => {
@@ -29,6 +32,14 @@ const Blogs = () => {
 
     fetchData()
   }, [])
+
+  // Calculate estimated read time based on content length
+  const calculateReadTime = (content) => {
+    const wordsPerMinute = 200
+    const wordCount = content.split(/\s+/).length
+    const readTime = Math.ceil(wordCount / wordsPerMinute)
+    return readTime < 1 ? 1 : readTime
+  }
 
   // Filter blogs based on search term and category
   const filteredBlogs = blogs.filter((blog) => {
@@ -97,11 +108,14 @@ const Blogs = () => {
                   <span className="blog-author">By {blog.authorName}</span>
                   <span className="blog-date">{new Date(blog.createdAt).toLocaleDateString()}</span>
                 </div>
-                <p className="blog-excerpt">{blog.content.substring(0, 200)}...</p>
+                <p className="blog-excerpt">{blog.content.substring(0, 150)}...</p>
                 <div className="blog-footer">
                   <Link to={`/blogs/${blog.id}`} className="btn btn-text">
                     Read More
                   </Link>
+                  <div className="blog-read-time">
+                    <FiClock /> {calculateReadTime(blog.content)} min read
+                  </div>
                 </div>
               </div>
             </div>
