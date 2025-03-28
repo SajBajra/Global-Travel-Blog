@@ -81,8 +81,8 @@ img {
 }
 
 .btn-outline {
-  background-color: transparent;
-  border: 1px solid var(--primary-color);
+  background-color: white;
+  border: var(--primary-color);
   color: var(--primary-color);
 }
 

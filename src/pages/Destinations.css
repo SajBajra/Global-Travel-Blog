@@ -9,14 +9,33 @@
   margin-bottom: 3rem;
 }
 
-.destinations-header h1 {
-  font-size: 2.5rem;
+.destinations-header h1 {  
+  font-size: 3rem;
   margin-bottom: 0.5rem;
+  color: #2c3e50;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  position: relative;
+  display: inline-block;
+}
+.destinations-header h1::after {
+  content: "";
+  position: absolute;
+  width: 60px;
+  height: 4px;
+  background-color: var(--primary-color);
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 2px;
 }
 
 .destinations-header p {
   color: var(--light-text);
-  margin-bottom: 2rem;
+  margin: 1.5rem auto;
+  max-width: 700px;
+  font-size: 1.1rem;
+  line-height: 1.6;
 }
 
 .search-container {

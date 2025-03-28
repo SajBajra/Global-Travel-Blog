@@ -87,9 +87,6 @@ const Navbar = () => {
 
           {currentUser ? (
             <li className="nav-item mobile-only">
-              <button onClick={handleLogout} className="nav-link logout-btn">
-                Logout
-              </button>
             </li>
           ) : (
             <li className="nav-item mobile-only">
