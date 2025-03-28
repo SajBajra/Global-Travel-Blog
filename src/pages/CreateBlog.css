@@ -1,49 +1,469 @@
 .create-blog-page {
-  max-width: 800px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 2rem 1rem;
 }
 
 .create-blog-header {
-  text-align: center;
-  margin-bottom: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2.5rem;
+  position: relative;
+}
+
+.back-button {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  font-size: 1.2rem;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  background-color: rgba(52, 152, 219, 0.1);
+}
+
+.back-button:hover {
+  background-color: rgba(52, 152, 219, 0.2);
+  transform: translateX(-3px);
 }
 
 .create-blog-header h1 {
   font-size: 2.5rem;
   margin-bottom: 0.5rem;
+  color: #2c3e50;
 }
 
 .create-blog-header p {
   color: var(--light-text);
+  margin: 0;
+}
+
+.progress-container {
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 150px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background-color: #f0f0f0;
+  border-radius: 20px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: var(--primary-color);
+  border-radius: 20px;
+  transition: width 0.5s ease;
+}
+
+.progress-text {
+  font-size: 0.8rem;
+  color: var(--light-text);
+  font-weight: 500;
+}
+
+.create-blog-container {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
 }
 
 .blog-form {
   background-color: white;
-  padding: 2rem;
+  padding: 2.5rem;
   border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.form-columns {
+  display: flex;
+  gap: 2.5rem;
+}
+
+.form-main-column {
+  flex: 2;
+}
+
+.form-sidebar-column {
+  flex: 1;
+}
+
+.form-group {
+  margin-bottom: 1.8rem;
+  position: relative;
+}
+
+.form-group label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.8rem;
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 1.05rem;
+}
+
+.form-icon {
+  color: var(--primary-color);
+}
+
+.required {
+  color: var(--secondary-color);
+  margin-left: 3px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background-color: #f9fafb;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+  background-color: white;
+}
+
+.form-group input.error,
+.form-group select.error,
+.form-group textarea.error,
+.image-upload-container.error {
+  border-color: var(--secondary-color);
+  background-color: rgba(231, 76, 60, 0.05);
+}
+
+.error-message {
+  color: var(--secondary-color);
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.image-upload-container {
+  border: 2px dashed var(--border-color);
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background-color: #f9fafb;
+  position: relative;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image-upload-container:hover,
+.image-upload-container.drag-active {
+  border-color: var(--primary-color);
+  background-color: rgba(52, 152, 219, 0.05);
+}
+
+.upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.upload-icon {
+  font-size: 2.5rem;
+  color: var(--primary-color);
+  opacity: 0.7;
+}
+
+.upload-placeholder p {
+  margin: 0;
+  color: #2c3e50;
+  font-weight: 500;
+}
+
+.upload-placeholder span {
+  font-size: 0.8rem;
+  color: var(--light-text);
+}
+
+.image-preview-container {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 .image-preview {
-  margin-top: 1rem;
-  border-radius: 4px;
+  max-width: 100%;
+  border-radius: 6px;
   overflow: hidden;
-  max-width: 300px;
+  max-height: 250px;
+  object-fit: contain;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.image-preview img {
-  width: 100%;
-  height: auto;
+.remove-image-btn {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background-color: white;
+  color: var(--secondary-color);
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 2;
+}
+
+.remove-image-btn:hover {
+  background-color: var(--secondary-color);
+  color: white;
+  transform: scale(1.1);
+}
+
+.char-count {
+  text-align: right;
+  font-size: 0.8rem;
+  color: var(--light-text);
+  margin-top: 0.5rem;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.9rem 1.8rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: white;
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(52, 152, 219, 0.4);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  background-color: #f0f0f0;
+  color: #2c3e50;
+}
+
+.btn-secondary:hover {
+  background-color: #e0e0e0;
+}
+
+.btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Improved Responsive styles */
+@media (max-width: 992px) {
+  .form-columns {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .create-blog-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .back-button {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  .create-blog-header > div {
+    margin-left: 3rem;
+    width: 100%;
+  }
+
+  .progress-container {
+    width: 100%;
+    margin-left: 0;
+    align-items: flex-start;
+    margin-top: 1rem;
+  }
 }
 
 @media (max-width: 768px) {
-  .create-blog-header h1 {
-    font-size: 2rem;
+  .create-blog-page {
+    padding: 1rem;
   }
 
   .blog-form {
     padding: 1.5rem;
+  }
+
+  .create-blog-header h1 {
+    font-size: 1.8rem;
+  }
+
+  .create-blog-header p {
+    font-size: 0.9rem;
+  }
+
+  .form-group label {
+    font-size: 1rem;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 0.8rem;
+    font-size: 0.95rem;
+  }
+
+  .image-upload-container {
+    padding: 1.5rem;
+    min-height: 180px;
+  }
+
+  .upload-icon {
+    font-size: 2rem;
+  }
+
+  .upload-placeholder p {
+    font-size: 0.9rem;
+  }
+
+  .form-actions {
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+
+  .btn {
+    width: 100%;
+    justify-content: center;
+    padding: 0.8rem 1.5rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .create-blog-page {
+    padding: 0.8rem;
+  }
+
+  .blog-form {
+    padding: 1.2rem;
+  }
+
+  .create-blog-header {
+    margin-bottom: 1.5rem;
+  }
+
+  .create-blog-header h1 {
+    font-size: 1.5rem;
+    margin-bottom: 0.3rem;
+  }
+
+  .create-blog-header p {
+    font-size: 0.85rem;
+  }
+
+  .back-button {
+    width: 35px;
+    height: 35px;
+    font-size: 1rem;
+  }
+
+  .create-blog-header > div {
+    margin-left: 2.5rem;
+  }
+
+  .form-group {
+    margin-bottom: 1.2rem;
+  }
+
+  .image-upload-container {
+    padding: 1rem;
+    min-height: 150px;
+  }
+
+  .upload-placeholder {
+    gap: 0.5rem;
+  }
+
+  .upload-icon {
+    font-size: 1.8rem;
+  }
+
+  .upload-placeholder p {
+    font-size: 0.85rem;
+  }
+
+  .upload-placeholder span {
+    font-size: 0.7rem;
+  }
+
+  .image-preview {
+    max-height: 180px;
+  }
+
+  .form-actions {
+    margin-top: 1.5rem;
+    padding-top: 1.2rem;
+  }
+
+  .btn {
+    font-size: 0.9rem;
+    padding: 0.7rem 1.2rem;
   }
 }
 
