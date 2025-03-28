@@ -164,7 +164,6 @@ const Profile = () => {
                       <div className="blog-item-meta">
                         <span className="blog-category">{blog.category}</span>
                         <span className="blog-date">{new Date(blog.createdAt).toLocaleDateString()}</span>
-                        <span className={`blog-status status-${blog.status}`}>{blog.status}</span>
                       </div>
                       <p>{blog.content.substring(0, 100)}...</p>
                     </div>
