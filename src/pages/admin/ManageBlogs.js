@@ -221,31 +221,21 @@ const ManageBlogs = () => {
           <Title level={2}>Manage Blogs</Title>
         </Col>
         <Col xs={24} md={12} lg={8}>
-          <Space direction={windowWidth < 768 ? "vertical" : "horizontal"} style={{ width: "100%" }}>
-            <Select
-              placeholder="Filter by Category"
-              style={{ width: "100%" }}
-              allowClear
-              onChange={setSelectedCategory}
-              value={selectedCategory}
-            >
-              {categories.map((category) => (
-                <Option key={category.id} value={category.name}>
-                  {category.name}
-                </Option>
-              ))}
-            </Select>
-            <Select
-              placeholder="Filter by Status"
-              style={{ width: "100%" }}
-              allowClear
-              onChange={setFilterStatus}
-              value={filterStatus}
-            >
-              <Option value="approved">Approved</Option>
-              <Option value="rejected">Rejected</Option>
-            </Select>
-          </Space>
+        <Space direction={windowWidth < 768 ? "vertical" : "horizontal"} style={{ width: "100%", justifyContent: 'flex-end' }}>
+          <Select
+            placeholder="Filter by Category"
+            style={{ width: "150px" }}
+            allowClear
+            onChange={setSelectedCategory}
+            value={selectedCategory}
+          >
+            {categories.map((category) => (
+              <Option key={category.id} value={category.name}>
+                {category.name}
+              </Option>
+            ))}
+          </Select>
+        </Space>
         </Col>
       </Row>
 
