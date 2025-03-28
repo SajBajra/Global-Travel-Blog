@@ -4,7 +4,6 @@
   padding: 2rem 1rem;
 }
 
-/* Loading Animation */
 .loading-container {
   display: flex;
   flex-direction: column;
@@ -29,7 +28,6 @@
   }
 }
 
-/* Header Section */
 .blogs-header {
   text-align: center;
   margin-bottom: 3rem;
@@ -66,7 +64,6 @@
   line-height: 1.6;
 }
 
-/* Filters Section */
 .blogs-filters {
   display: flex;
   justify-content: center;
@@ -80,7 +77,7 @@
   width: 100%;
   position: relative;
   transition: all 0.3s ease;
-  border-radius: 30px;
+  border-radius: 20px;
   background-color: #f8f9fa;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
   display: flex;
@@ -103,7 +100,7 @@
   width: 100%;
   padding: 0.9rem 1rem 0.9rem 2.8rem;
   border: none;
-  border-radius: 30px;
+  border-radius: 20px;
   font-size: 1rem;
   background: transparent;
 }
@@ -132,7 +129,7 @@
 .category-filter {
   width: 220px;
   position: relative;
-  border-radius: 30px;
+  border-radius: 20px;
   background-color: #f8f9fa;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
   display: flex;
@@ -151,7 +148,7 @@
   width: 100%;
   padding: 0.9rem 1rem 0.9rem 2.8rem;
   border: none;
-  border-radius: 30px;
+  border-radius: 20px;
   font-size: 1rem;
   background-color: transparent;
   cursor: pointer;
@@ -180,7 +177,7 @@
   gap: 0.5rem;
   padding: 0.9rem 1.8rem;
   border: none;
-  border-radius: 30px;
+  border-radius: 20px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
@@ -396,7 +393,7 @@
   gap: 0.5rem;
   padding: 0.7rem 1.5rem;
   border: none;
-  border-radius: 30px;
+  border-radius: 20px;
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
