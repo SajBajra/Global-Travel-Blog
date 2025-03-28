@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react"
-import axios from "axios"
-import { toast } from "react-toastify"
+import { blogUtil, categoryUtil } from "../../util"
 import {
   Table,
   Button,
@@ -38,15 +37,14 @@ const ManageBlogs = () => {
     const fetchData = async () => {
       try {
         // Fetch blogs
-        const blogsRes = await axios.get("http://localhost:3001/blogs?_sort=createdAt&_order=desc")
-        setBlogs(blogsRes.data)
+        const blogsData = await blogUtil.getAllBlogs("createdAt", "desc")
+        setBlogs(blogsData)
 
         // Fetch categories
-        const categoriesRes = await axios.get("http://localhost:3001/categories")
-        setCategories(categoriesRes.data)
+        const categoriesData = await categoryUtil.getAllCategories()
+        setCategories(categoriesData)
       } catch (error) {
         console.error("Error fetching data:", error)
-        toast.error("Failed to load data")
       } finally {
         setLoading(false)
       }
@@ -75,31 +73,33 @@ const ManageBlogs = () => {
 
   const handleDeleteBlog = async (id) => {
     try {
-      await axios.delete(`http://localhost:3001/blogs/${id}`)
-      setBlogs((prev) => prev.filter((blog) => blog.id !== id))
-      toast.success("Blog deleted successfully")
+      const result = await blogUtil.deleteBlog(id)
 
-      if (selectedBlog && selectedBlog.id === id) {
-        setDrawerVisible(false)
+      if (result.success) {
+        setBlogs((prev) => prev.filter((blog) => blog.id !== id))
+
+        if (selectedBlog && selectedBlog.id === id) {
+          setDrawerVisible(false)
+        }
       }
     } catch (error) {
       console.error("Error deleting blog:", error)
-      toast.error("Failed to delete blog")
     }
   }
 
   const handleCategoryChange = async (blogId, categoryName) => {
     try {
-      await axios.patch(`http://localhost:3001/blogs/${blogId}`, { category: categoryName })
-      setBlogs((prev) => prev.map((blog) => (blog.id === blogId ? { ...blog, category: categoryName } : blog)))
-      toast.success("Blog category updated")
+      const result = await blogUtil.updateBlog(blogId, { category: categoryName })
 
-      if (selectedBlog && selectedBlog.id === blogId) {
-        setSelectedBlog((prev) => ({ ...prev, category: categoryName }))
+      if (result.success) {
+        setBlogs((prev) => prev.map((blog) => (blog.id === blogId ? { ...blog, category: categoryName } : blog)))
+
+        if (selectedBlog && selectedBlog.id === blogId) {
+          setSelectedBlog((prev) => ({ ...prev, category: categoryName }))
+        }
       }
     } catch (error) {
       console.error("Error updating blog category:", error)
-      toast.error("Failed to update blog category")
     }
   }
 
@@ -216,38 +216,38 @@ const ManageBlogs = () => {
 
   return (
     <div className="admin-manage-page">
-<Row justify="space-between" align="middle" className="page-header">
-  <Col>
-    <Title level={2}>Manage Blogs</Title>
-  </Col>
-  <Col xs={24} md={12} lg={8} style={{ display: "flex", justifyContent: "end" }}>
-    <Space
-      direction={windowWidth < 768 ? "vertical" : "horizontal"}
-      style={{ width: "100%", maxWidth: "300px" }}
-    >
-      <Select
-        placeholder="Filter by Category"
-        style={{ minWidth: "200px", width: "100%" }}
-        allowClear
-        onChange={(value) => {
-          if (value === "All") {
-            setSelectedCategory(null);  // Clears the selected category if "All" is chosen
-          } else {
-            setSelectedCategory(value); // Otherwise set the selected category
-          }
-        }}
-        value={selectedCategory || undefined} // 'undefined' will let the select show as if nothing is selected
-      >
-        <Option key="all" value="All">All Categories</Option>
-        {categories.map((category) => (
-          <Option key={category.id} value={category.name}>
-            {category.name}
-          </Option>
-        ))}
-      </Select>
-    </Space>
-  </Col>
-</Row>
+      <Row justify="space-between" align="middle" className="page-header">
+        <Col>
+          <Title level={2}>Manage Blogs</Title>
+        </Col>
+        <Col xs={24} md={12} lg={8}>
+          <Space direction={windowWidth < 768 ? "vertical" : "horizontal"} style={{ width: "100%" }}>
+            <Select
+              placeholder="Filter by Category"
+              style={{ width: "100%" }}
+              allowClear
+              onChange={setSelectedCategory}
+              value={selectedCategory}
+            >
+              {categories.map((category) => (
+                <Option key={category.id} value={category.name}>
+                  {category.name}
+                </Option>
+              ))}
+            </Select>
+            <Select
+              placeholder="Filter by Status"
+              style={{ width: "100%" }}
+              allowClear
+              onChange={setFilterStatus}
+              value={filterStatus}
+            >
+              <Option value="approved">Approved</Option>
+              <Option value="rejected">Rejected</Option>
+            </Select>
+          </Space>
+        </Col>
+      </Row>
 
       <Card>
         <Table

@@ -1,9 +1,8 @@
 import { useState, useContext } from "react"
-import { Link, useNavigate } from "react-router"
+import { Link, useNavigate } from "react-router-dom"
 import { AuthContext } from "../context/AuthContext"
+import { toastUtil } from "../util"
 import "./Auth.css"
-import { toast } from "react-toastify"
-import "react-toastify/dist/ReactToastify.css"
 
 const Signup = () => {
   const [name, setName] = useState("")
@@ -19,7 +18,7 @@ const Signup = () => {
     e.preventDefault()
 
     if (password !== confirmPassword) {
-      toast.error("Passwords do not match")
+      toastUtil.error("Passwords do not match")
       return
     }
 

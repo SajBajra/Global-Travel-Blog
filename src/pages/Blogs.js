@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
-import axios from "axios"
 import { Link } from "react-router-dom"
 import { FiClock, FiSearch, FiFilter, FiHeart, FiEdit, FiChevronRight, FiX } from "react-icons/fi"
+import { blogUtil, categoryUtil } from "../util"
 import "./Blogs.css"
 
 const Blogs = () => {
@@ -16,12 +16,12 @@ const Blogs = () => {
     const fetchData = async () => {
       try {
         // Fetch blogs
-        const blogsRes = await axios.get("http://localhost:3001/blogs?_sort=createdAt&_order=desc")
-        setBlogs(blogsRes.data)
+        const blogsData = await blogUtil.getAllBlogs()
+        setBlogs(blogsData)
 
         // Fetch categories
-        const categoriesRes = await axios.get("http://localhost:3001/categories")
-        setCategories(categoriesRes.data)
+        const categoriesData = await categoryUtil.getAllCategories()
+        setCategories(categoriesData)
       } catch (error) {
         console.error("Error fetching data:", error)
       } finally {

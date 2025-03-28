@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
-import axios from "axios"
-import { Link } from "react-router"
-import { FaMapMarkerAlt, FaPhone, FaEnvelope, FaClock } from "react-icons/fa"
+import { Link } from "react-router-dom"
+import { FaMapMarkerAlt, FaPhone, FaEnvelope } from "react-icons/fa"
+import { blogUtil, destinationUtil } from "../util"
 import "./Home.css"
 
 const Home = () => {
@@ -13,12 +13,12 @@ const Home = () => {
     const fetchData = async () => {
       try {
         // Fetch featured destinations
-        const destinationsRes = await axios.get("http://localhost:3001/destinations?_limit=6")
-        setFeaturedDestinations(destinationsRes.data)
+        const destinationsData = await destinationUtil.getFeaturedDestinations(6)
+        setFeaturedDestinations(destinationsData)
 
         // Fetch recent blogs
-        const blogsRes = await axios.get("http://localhost:3001/blogs?_sort=createdAt&_order=desc&_limit=6")
-        setRecentBlogs(blogsRes.data)
+        const blogsData = await blogUtil.getAllBlogs("createdAt", "desc")
+        setRecentBlogs(blogsData.slice(0, 6))
       } catch (error) {
         console.error("Error fetching data:", error)
       } finally {
@@ -33,7 +33,7 @@ const Home = () => {
     return (
       <div className="loading-container">
         <div className="loading-spinner"></div>
-        <p>Loading...</p>
+        <p>Loading amazing destinations...</p>
       </div>
     )
   }
@@ -162,20 +162,18 @@ const Home = () => {
               <h3>Email Address</h3>
               <p>info@globaltravelblog.com</p>
             </div>
-
-            
           </div>
 
           <div className="contact-map">
-          <iframe
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2907.1419819354137!2d85.36624141452904!3d27.577481582998642!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39eb1d4d7c41d57f%3A0x81265d157eae492!2sChapagaun%2C%20Lalitpur%2C%20Nepal!5e0!3m2!1sen!2sus!4v1647887322329!5m2!1sen!2sus"
-            width="100%"
-            height="100%"
-            style={{ border: 0 }}
-            allowfullscreen=""
-            loading="lazy"
-            title="Map of Chapagaun, Lalitpur, Nepal"
-          />
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d56516.31625953805!2d85.29111337431642!3d27.70895594443863!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39eb198a307baabf%3A0xb5137c1bf18db1ea!2sKathmandu%2044600%2C%20Nepal!5e0!3m2!1sen!2sus!4v1647887322329!5m2!1sen!2sus"
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              allowFullScreen=""
+              loading="lazy"
+              title="Map of Nepal"
+            ></iframe>
           </div>
         </div>
       </section>

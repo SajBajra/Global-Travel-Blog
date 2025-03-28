@@ -1,7 +1,5 @@
 import { useState, useEffect, useContext } from "react"
 import { useParams, Link } from "react-router-dom"
-import axios from "axios"
-import { toast } from "react-toastify"
 import { AuthContext } from "../context/AuthContext"
 import {
   FacebookShareButton,
@@ -13,7 +11,8 @@ import {
   WhatsappIcon,
   EmailIcon,
 } from "react-share"
-import { FaHeart, FaRegHeart, FaReply, FaEdit, FaTrash, FaFlag, FaRegThumbsUp } from "react-icons/fa"
+import { FiHeart, FiMessageSquare, FiEdit, FiTrash, FiFlag, FiThumbsUp } from "react-icons/fi"
+import { blogUtil, commentUtil, reportUtil, toastUtil } from "../util"
 import "./SingleBlog.css"
 
 const SingleBlog = () => {
@@ -39,57 +38,37 @@ const SingleBlog = () => {
     const fetchBlogAndComments = async () => {
       try {
         // Fetch blog
-        const blogResponse = await axios.get(`http://localhost:3001/blogs/${id}`)
-        setBlog(blogResponse.data)
-        setLikeCount(blogResponse.data.likes || 0)
+        const blogData = await blogUtil.getBlogById(id)
+        setBlog(blogData)
+        setLikeCount(blogData.likes || 0)
 
         // Check if user has liked this blog
         if (currentUser) {
-          const likesResponse = await axios.get(
-            `http://localhost:3001/likes?userId=${currentUser.id}&blogId=${Number.parseInt(id)}`,
-          )
-          setLiked(likesResponse.data.length > 0)
+          const isLiked = await blogUtil.checkBlogLiked(id, currentUser.id)
+          setLiked(isLiked)
         }
 
         // Fetch comments
-        const commentsResponse = await axios.get(
-          `http://localhost:3001/comments?blogId=${Number.parseInt(id)}&parentId=null&_sort=createdAt&_order=desc`,
-        )
-        setComments(commentsResponse.data)
+        const commentsData = await commentUtil.getBlogComments(id)
+        setComments(commentsData)
 
         // Fetch replies
-        const repliesResponse = await axios.get(
-          `http://localhost:3001/comments?blogId=${Number.parseInt(id)}&parentId_ne=null&_sort=createdAt&_order=asc`,
-        )
-
-        // Group replies by parent comment ID
-        const repliesMap = {}
-        repliesResponse.data.forEach((reply) => {
-          if (!repliesMap[reply.parentId]) {
-            repliesMap[reply.parentId] = []
-          }
-          repliesMap[reply.parentId].push(reply)
-        })
-
-        setReplies(repliesMap)
+        const repliesData = await commentUtil.getBlogReplies(id)
+        setReplies(repliesData)
 
         // Fetch comment likes for current user
         if (currentUser) {
-          const commentLikesResponse = await axios.get(`http://localhost:3001/commentLikes?userId=${currentUser.id}`)
-          const likesMap = {}
-          commentLikesResponse.data.forEach((like) => {
-            likesMap[like.commentId] = true
-          })
+          const likesMap = await commentUtil.getUserCommentLikes(currentUser.id)
           setCommentLikes(likesMap)
         }
       } catch (error) {
         console.error("Error fetching data:", error)
         if (error.response && error.response.status === 404) {
-          toast.error("Blog not found")
+          toastUtil.error("Blog not found")
         } else if (error.code === "ERR_NETWORK") {
-          toast.error("Network error. Is the JSON server running?")
+          toastUtil.error("Network error. Is the JSON server running?")
         } else {
-          toast.error("Failed to load blog: " + (error.message || "Unknown error"))
+          toastUtil.error("Failed to load blog: " + (error.message || "Unknown error"))
         }
       } finally {
         setLoading(false)
@@ -101,46 +80,19 @@ const SingleBlog = () => {
 
   const handleLikeBlog = async () => {
     if (!currentUser) {
-      toast.error("Please log in to like this blog")
+      toastUtil.error("Please log in to like this blog")
       return
     }
 
     try {
-      if (liked) {
-        // Unlike the blog
-        const likesResponse = await axios.get(
-          `http://localhost:3001/likes?userId=${currentUser.id}&blogId=${Number.parseInt(id)}`,
-        )
-        if (likesResponse.data.length > 0) {
-          await axios.delete(`http://localhost:3001/likes/${likesResponse.data[0].id}`)
-        }
+      const result = await blogUtil.toggleLikeBlog(id, currentUser.id, liked)
 
-        // Update local state
-        setLiked(false)
-        const newLikeCount = Math.max(0, likeCount - 1)
-        setLikeCount(newLikeCount)
-
-        // Update blog likes count in database
-        await axios.patch(`http://localhost:3001/blogs/${id}`, { likes: newLikeCount })
-      } else {
-        // Like the blog
-        await axios.post(`http://localhost:3001/likes`, {
-          userId: currentUser.id,
-          blogId: Number.parseInt(id),
-          createdAt: new Date().toISOString(),
-        })
-
-        // Update local state
-        setLiked(true)
-        const newLikeCount = likeCount + 1
-        setLikeCount(newLikeCount)
-
-        // Update blog likes count in database
-        await axios.patch(`http://localhost:3001/blogs/${id}`, { likes: newLikeCount })
+      if (result.success) {
+        setLiked(result.liked)
+        setLikeCount(result.likeCount)
       }
     } catch (error) {
       console.error("Error updating like status:", error)
-      toast.error("Failed to update like status")
     }
   }
 
@@ -148,12 +100,12 @@ const SingleBlog = () => {
     e.preventDefault()
 
     if (!currentUser) {
-      toast.error("Please log in to comment")
+      toastUtil.error("Please log in to comment")
       return
     }
 
     if (!newComment.trim()) {
-      toast.error("Comment cannot be empty")
+      toastUtil.error("Comment cannot be empty")
       return
     }
 
@@ -167,17 +119,16 @@ const SingleBlog = () => {
         userName: currentUser.name,
         userProfilePic: currentUser.profilePic || "/default-profile.jpg",
         content: newComment,
-        createdAt: new Date().toISOString(),
-        likes: 0,
       }
 
-      const response = await axios.post("http://localhost:3001/comments", commentData)
-      setComments([response.data, ...comments])
-      setNewComment("")
-      toast.success("Comment posted successfully")
+      const result = await commentUtil.addComment(commentData)
+
+      if (result.success) {
+        setComments([result.comment, ...comments])
+        setNewComment("")
+      }
     } catch (error) {
       console.error("Error posting comment:", error)
-      toast.error("Failed to post comment")
     } finally {
       setSubmitting(false)
     }
@@ -185,12 +136,12 @@ const SingleBlog = () => {
 
   const handleReplySubmit = async (commentId) => {
     if (!currentUser) {
-      toast.error("Please log in to reply")
+      toastUtil.error("Please log in to reply")
       return
     }
 
     if (!replyText[commentId] || !replyText[commentId].trim()) {
-      toast.error("Reply cannot be empty")
+      toastUtil.error("Reply cannot be empty")
       return
     }
 
@@ -202,143 +153,118 @@ const SingleBlog = () => {
         userName: currentUser.name,
         userProfilePic: currentUser.profilePic || "/default-profile.jpg",
         content: replyText[commentId],
-        createdAt: new Date().toISOString(),
-        likes: 0,
       }
 
-      const response = await axios.post("http://localhost:3001/comments", replyData)
+      const result = await commentUtil.addComment(replyData)
 
-      // Update replies state
-      setReplies((prev) => {
-        const newReplies = { ...prev }
-        if (!newReplies[commentId]) {
-          newReplies[commentId] = []
-        }
-        newReplies[commentId] = [...newReplies[commentId], response.data]
-        return newReplies
-      })
+      if (result.success) {
+        // Update replies state
+        setReplies((prev) => {
+          const newReplies = { ...prev }
+          if (!newReplies[commentId]) {
+            newReplies[commentId] = []
+          }
+          newReplies[commentId] = [...newReplies[commentId], result.comment]
+          return newReplies
+        })
 
-      // Clear reply text and close reply form
-      setReplyText((prev) => ({ ...prev, [commentId]: "" }))
-      setReplyingTo(null)
-
-      toast.success("Reply posted successfully")
+        // Clear reply text and close reply form
+        setReplyText((prev) => ({ ...prev, [commentId]: "" }))
+        setReplyingTo(null)
+      }
     } catch (error) {
       console.error("Error posting reply:", error)
-      toast.error("Failed to post reply")
     }
   }
 
   const handleEditComment = async (commentId) => {
     if (!editCommentText.trim()) {
-      toast.error("Comment cannot be empty")
+      toastUtil.error("Comment cannot be empty")
       return
     }
 
     try {
-      const response = await axios.patch(`http://localhost:3001/comments/${commentId}`, {
-        content: editCommentText,
-      })
+      const result = await commentUtil.updateComment(commentId, editCommentText)
 
-      // Update comments or replies based on whether it's a parent comment or reply
-      const updatedComment = response.data
+      if (result.success) {
+        const updatedComment = result.comment
 
-      if (updatedComment.parentId === null) {
-        // It's a parent comment
-        setComments(comments.map((comment) => (comment.id === commentId ? updatedComment : comment)))
-      } else {
-        // It's a reply
-        setReplies((prev) => {
-          const newReplies = { ...prev }
-          if (newReplies[updatedComment.parentId]) {
-            newReplies[updatedComment.parentId] = newReplies[updatedComment.parentId].map((reply) =>
-              reply.id === commentId ? updatedComment : reply,
-            )
-          }
-          return newReplies
-        })
+        if (updatedComment.parentId === null) {
+          // It's a parent comment
+          setComments(comments.map((comment) => (comment.id === commentId ? updatedComment : comment)))
+        } else {
+          // It's a reply
+          setReplies((prev) => {
+            const newReplies = { ...prev }
+            if (newReplies[updatedComment.parentId]) {
+              newReplies[updatedComment.parentId] = newReplies[updatedComment.parentId].map((reply) =>
+                reply.id === commentId ? updatedComment : reply,
+              )
+            }
+            return newReplies
+          })
+        }
+
+        setEditCommentId(null)
+        setEditCommentText("")
       }
-
-      setEditCommentId(null)
-      setEditCommentText("")
-      toast.success("Comment updated successfully")
     } catch (error) {
       console.error("Error updating comment:", error)
-      toast.error("Failed to update comment")
     }
   }
 
   const handleDeleteComment = async (commentId, isReply = false, parentId = null) => {
     try {
-      await axios.delete(`http://localhost:3001/comments/${commentId}`)
+      const result = await commentUtil.deleteComment(commentId)
 
-      if (isReply) {
-        // Delete reply
-        setReplies((prev) => {
-          const newReplies = { ...prev }
-          if (newReplies[parentId]) {
-            newReplies[parentId] = newReplies[parentId].filter((reply) => reply.id !== commentId)
-          }
-          return newReplies
-        })
-      } else {
-        // Delete parent comment and all its replies
-        setComments(comments.filter((comment) => comment.id !== commentId))
+      if (result.success) {
+        if (isReply) {
+          // Delete reply
+          setReplies((prev) => {
+            const newReplies = { ...prev }
+            if (newReplies[parentId]) {
+              newReplies[parentId] = newReplies[parentId].filter((reply) => reply.id !== commentId)
+            }
+            return newReplies
+          })
+        } else {
+          // Delete parent comment and all its replies
+          setComments(comments.filter((comment) => comment.id !== commentId))
 
-        // Also delete all replies to this comment from the database
-        if (replies[commentId] && replies[commentId].length > 0) {
-          for (const reply of replies[commentId]) {
-            await axios.delete(`http://localhost:3001/comments/${reply.id}`)
+          // Also delete all replies to this comment from the database
+          if (replies[commentId] && replies[commentId].length > 0) {
+            for (const reply of replies[commentId]) {
+              await commentUtil.deleteComment(reply.id)
+            }
           }
+
+          setReplies((prev) => {
+            const newReplies = { ...prev }
+            delete newReplies[commentId]
+            return newReplies
+          })
         }
-
-        setReplies((prev) => {
-          const newReplies = { ...prev }
-          delete newReplies[commentId]
-          return newReplies
-        })
       }
-
-      toast.success("Comment deleted successfully")
     } catch (error) {
       console.error("Error deleting comment:", error)
-      toast.error("Failed to delete comment")
     }
   }
 
   const handleLikeComment = async (commentId, isReply = false, parentId = null) => {
     if (!currentUser) {
-      toast.error("Please log in to like comments")
+      toastUtil.error("Please log in to like comments")
       return
     }
 
     try {
       const isLiked = commentLikes[commentId]
+      const result = await commentUtil.toggleLikeComment(commentId, currentUser.id, isLiked)
 
-      if (isLiked) {
-        // User already liked, so unlike
-        const likesResponse = await axios.get(
-          `http://localhost:3001/commentLikes?userId=${currentUser.id}&commentId=${commentId}`,
-        )
-
-        if (likesResponse.data.length > 0) {
-          await axios.delete(`http://localhost:3001/commentLikes/${likesResponse.data[0].id}`)
-        }
-
-        // Get current comment to update likes count
-        const commentResponse = await axios.get(`http://localhost:3001/comments/${commentId}`)
-        const currentLikes = commentResponse.data.likes || 0
-        const newLikeCount = Math.max(0, currentLikes - 1)
-
-        // Update comment likes count
-        const updatedComment = await axios.patch(`http://localhost:3001/comments/${commentId}`, {
-          likes: newLikeCount,
-        })
-
+      if (result.success) {
         // Update local state
         setCommentLikes((prev) => ({
           ...prev,
-          [commentId]: false,
+          [commentId]: result.liked,
         }))
 
         if (isReply) {
@@ -346,124 +272,43 @@ const SingleBlog = () => {
             const newReplies = { ...prev }
             if (newReplies[parentId]) {
               newReplies[parentId] = newReplies[parentId].map((reply) =>
-                reply.id === commentId ? updatedComment.data : reply,
+                reply.id === commentId ? result.comment : reply,
               )
             }
             return newReplies
           })
         } else {
-          setComments(comments.map((comment) => (comment.id === commentId ? updatedComment.data : comment)))
-        }
-      } else {
-        // User hasn't liked, so add like
-        await axios.post(`http://localhost:3001/commentLikes`, {
-          userId: currentUser.id,
-          commentId: commentId,
-          createdAt: new Date().toISOString(),
-        })
-
-        // Get current comment to update likes count
-        const commentResponse = await axios.get(`http://localhost:3001/comments/${commentId}`)
-        const currentLikes = commentResponse.data.likes || 0
-        const newLikeCount = currentLikes + 1
-
-        // Update comment likes count
-        const updatedComment = await axios.patch(`http://localhost:3001/comments/${commentId}`, {
-          likes: newLikeCount,
-        })
-
-        // Update local state
-        setCommentLikes((prev) => ({
-          ...prev,
-          [commentId]: true,
-        }))
-
-        if (isReply) {
-          setReplies((prev) => {
-            const newReplies = { ...prev }
-            if (newReplies[parentId]) {
-              newReplies[parentId] = newReplies[parentId].map((reply) =>
-                reply.id === commentId ? updatedComment.data : reply,
-              )
-            }
-            return newReplies
-          })
-        } else {
-          setComments(comments.map((comment) => (comment.id === commentId ? updatedComment.data : comment)))
+          setComments(comments.map((comment) => (comment.id === commentId ? result.comment : comment)))
         }
       }
     } catch (error) {
       console.error("Error updating comment like:", error)
-      toast.error("Failed to update like")
     }
   }
 
   const handleReportComment = async (commentId) => {
     if (!currentUser) {
-      toast.error("Please log in to report comments")
+      toastUtil.error("Please log in to report comments")
       return
     }
 
     try {
-      // Check if user already reported this comment
-      const reportsResponse = await axios.get(
-        `http://localhost:3001/reports?userId=${currentUser.id}&commentId=${commentId}`,
-      )
-
-      if (reportsResponse.data.length > 0) {
-        toast.info("You have already reported this comment")
-        return
-      }
-
-      // Add report
-      await axios.post(`http://localhost:3001/reports`, {
-        userId: currentUser.id,
-        commentId: commentId,
-        blogId: Number.parseInt(id),
-        type: "comment",
-        reason: "Inappropriate content",
-        status: "pending",
-        createdAt: new Date().toISOString(),
-      })
-
-      toast.success("Comment reported successfully. An admin will review it.")
+      await reportUtil.reportComment(currentUser.id, commentId, id)
     } catch (error) {
       console.error("Error reporting comment:", error)
-      toast.error("Failed to report comment")
     }
   }
 
   const handleReportBlog = async () => {
     if (!currentUser) {
-      toast.error("Please log in to report this blog")
+      toastUtil.error("Please log in to report this blog")
       return
     }
 
     try {
-      // Check if user already reported this blog
-      const reportsResponse = await axios.get(
-        `http://localhost:3001/reports?userId=${currentUser.id}&blogId=${Number.parseInt(id)}&type=blog`,
-      )
-
-      if (reportsResponse.data.length > 0) {
-        toast.info("You have already reported this blog")
-        return
-      }
-
-      // Add report
-      await axios.post(`http://localhost:3001/reports`, {
-        userId: currentUser.id,
-        blogId: Number.parseInt(id),
-        type: "blog",
-        reason: "Inappropriate content",
-        status: "pending",
-        createdAt: new Date().toISOString(),
-      })
-
-      toast.success("Blog reported successfully. An admin will review it.")
+      await reportUtil.reportBlog(currentUser.id, id)
     } catch (error) {
       console.error("Error reporting blog:", error)
-      toast.error("Failed to report blog")
     }
   }
 
@@ -509,12 +354,11 @@ const SingleBlog = () => {
           onClick={handleLikeBlog}
           aria-label={liked ? "Unlike this blog" : "Like this blog"}
         >
-          {liked ? <FaHeart /> : <FaRegHeart />}
-          <span>{likeCount}</span>
+          <FiHeart /> <span>{likeCount}</span>
         </button>
 
         <button className="report-button" onClick={handleReportBlog} aria-label="Report this blog">
-          <FaFlag /> Report
+          <FiFlag /> Report
         </button>
       </div>
 
@@ -602,14 +446,14 @@ const SingleBlog = () => {
                           }}
                           aria-label="Edit comment"
                         >
-                          <FaEdit />
+                          <FiEdit />
                         </button>
                         <button
                           className="comment-action-btn delete-btn"
                           onClick={() => handleDeleteComment(comment.id)}
                           aria-label="Delete comment"
                         >
-                          <FaTrash />
+                          <FiTrash />
                         </button>
                       </>
                     )}
@@ -620,7 +464,7 @@ const SingleBlog = () => {
                         onClick={() => handleReportComment(comment.id)}
                         aria-label="Report comment"
                       >
-                        <FaFlag />
+                        <FiFlag />
                       </button>
                     )}
                   </div>
@@ -660,7 +504,7 @@ const SingleBlog = () => {
                     onClick={() => handleLikeComment(comment.id)}
                     aria-label="Like comment"
                   >
-                    <FaRegThumbsUp /> <span>{comment.likes || 0}</span>
+                    <FiThumbsUp /> <span>{comment.likes || 0}</span>
                   </button>
 
                   {currentUser && (
@@ -672,7 +516,7 @@ const SingleBlog = () => {
                       }}
                       aria-label="Reply to comment"
                     >
-                      <FaReply /> Reply
+                      <FiMessageSquare /> Reply
                     </button>
                   )}
                 </div>
@@ -732,14 +576,14 @@ const SingleBlog = () => {
                                   }}
                                   aria-label="Edit reply"
                                 >
-                                  <FaEdit />
+                                  <FiEdit />
                                 </button>
                                 <button
                                   className="comment-action-btn delete-btn"
                                   onClick={() => handleDeleteComment(reply.id, true, comment.id)}
                                   aria-label="Delete reply"
                                 >
-                                  <FaTrash />
+                                  <FiTrash />
                                 </button>
                               </>
                             )}
@@ -750,7 +594,7 @@ const SingleBlog = () => {
                                 onClick={() => handleReportComment(reply.id)}
                                 aria-label="Report reply"
                               >
-                                <FaFlag />
+                                <FiFlag />
                               </button>
                             )}
                           </div>
@@ -790,7 +634,7 @@ const SingleBlog = () => {
                             onClick={() => handleLikeComment(reply.id, true, comment.id)}
                             aria-label="Like reply"
                           >
-                            <FaRegThumbsUp /> <span>{reply.likes || 0}</span>
+                            <FiThumbsUp /> <span>{reply.likes || 0}</span>
                           </button>
                         </div>
                       </div>

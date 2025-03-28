@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import axios from "axios"
+import { destinationUtil } from "../util"
 import "./Destinations.css"
 
 const Destinations = () => {
@@ -10,8 +10,8 @@ const Destinations = () => {
   useEffect(() => {
     const fetchDestinations = async () => {
       try {
-        const response = await axios.get("http://localhost:3001/destinations")
-        setDestinations(response.data)
+        const destinationsData = await destinationUtil.getAllDestinations()
+        setDestinations(destinationsData)
       } catch (error) {
         console.error("Error fetching destinations:", error)
       } finally {

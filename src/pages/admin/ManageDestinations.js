@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react"
-import axios from "axios"
-import { toast } from "react-toastify"
+import { destinationUtil, toastUtil } from "../../util"
 import {
   Table,
   Button,
@@ -16,6 +15,7 @@ import {
   Row,
   Col,
   Tag,
+  Tooltip,
 } from "antd"
 import {
   PlusOutlined,
@@ -24,6 +24,7 @@ import {
   UploadOutlined,
   MinusCircleOutlined,
   PlusCircleOutlined,
+  EyeOutlined,
 } from "@ant-design/icons"
 import "./AdminPages.css"
 
@@ -39,18 +40,27 @@ const ManageDestinations = () => {
   const [imageUrl, setImageUrl] = useState("")
   const [previewImage, setPreviewImage] = useState("")
   const [fileList, setFileList] = useState([])
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth)
 
   useEffect(() => {
     fetchDestinations()
+
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth)
+    }
+
+    window.addEventListener("resize", handleResize)
+    return () => {
+      window.removeEventListener("resize", handleResize)
+    }
   }, [])
 
   const fetchDestinations = async () => {
     try {
-      const response = await axios.get("http://localhost:3001/destinations")
-      setDestinations(response.data)
+      const destinationsData = await destinationUtil.getAllDestinations()
+      setDestinations(destinationsData)
     } catch (error) {
       console.error("Error fetching destinations:", error)
-      toast.error("Failed to load destinations")
     } finally {
       setLoading(false)
     }
@@ -99,12 +109,12 @@ const ManageDestinations = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:3001/destinations/${id}`)
-      setDestinations((prev) => prev.filter((dest) => dest.id !== id))
-      toast.success("Destination deleted successfully")
+      const result = await destinationUtil.deleteDestination(id)
+      if (result.success) {
+        setDestinations((prev) => prev.filter((dest) => dest.id !== id))
+      }
     } catch (error) {
       console.error("Error deleting destination:", error)
-      toast.error("Failed to delete destination")
     }
   }
 
@@ -137,7 +147,7 @@ const ManageDestinations = () => {
 
   const handleSubmit = async (values) => {
     if (!imageUrl) {
-      toast.error("Please upload an image")
+      toastUtil.error("Please upload an image")
       return
     }
 
@@ -147,81 +157,109 @@ const ManageDestinations = () => {
         imageUrl,
       }
 
+      let result
       if (editingDestination) {
-        await axios.put(`http://localhost:3001/destinations/${editingDestination.id}`, destinationData)
-        toast.success("Destination updated successfully")
+        result = await destinationUtil.updateDestination(editingDestination.id, destinationData)
       } else {
-        await axios.post("http://localhost:3001/destinations", destinationData)
-        toast.success("Destination added successfully")
+        result = await destinationUtil.addDestination(destinationData)
       }
 
-      setIsModalVisible(false)
-      fetchDestinations()
+      if (result.success) {
+        setIsModalVisible(false)
+        fetchDestinations()
+      }
     } catch (error) {
       console.error("Error saving destination:", error)
-      toast.error("Failed to save destination")
     }
   }
 
-  const columns = [
-    {
-      title: "Image",
-      dataIndex: "imageUrl",
-      key: "imageUrl",
-      render: (imageUrl) => (
-        <Image
-          src={imageUrl || "/placeholder.svg"}
-          alt="Destination"
-          width={80}
-          height={60}
-          style={{ objectFit: "cover" }}
-        />
-      ),
-    },
-    {
-      title: "Name",
-      dataIndex: "name",
-      key: "name",
-      sorter: (a, b) => a.name.localeCompare(b.name),
-    },
-    {
-      title: "Country",
-      dataIndex: "country",
-      key: "country",
-      sorter: (a, b) => a.country.localeCompare(b.country),
-    },
-    {
-      title: "Climate",
-      dataIndex: "climate",
-      key: "climate",
-    },
-    {
-      title: "Best Time to Visit",
-      dataIndex: "bestTimeToVisit",
-      key: "bestTimeToVisit",
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      render: (_, record) => (
-        <Space size="middle">
-          <Button type="primary" icon={<EditOutlined />} onClick={() => showModal(record)}>
-            Edit
-          </Button>
-          <Popconfirm
-            title="Are you sure you want to delete this destination?"
-            onConfirm={() => handleDelete(record.id)}
-            okText="Yes"
-            cancelText="No"
-          >
-            <Button type="primary" danger icon={<DeleteOutlined />}>
-              Delete
-            </Button>
-          </Popconfirm>
-        </Space>
-      ),
-    },
-  ]
+  // Responsive columns configuration
+  const getColumns = () => {
+    const baseColumns = [
+      {
+        title: "Image",
+        dataIndex: "imageUrl",
+        key: "imageUrl",
+        render: (imageUrl) => (
+          <Image
+            src={imageUrl || "/placeholder.svg"}
+            alt="Destination"
+            width={80}
+            height={60}
+            style={{ objectFit: "cover" }}
+          />
+        ),
+      },
+      {
+        title: "Name",
+        dataIndex: "name",
+        key: "name",
+        sorter: (a, b) => a.name.localeCompare(b.name),
+      },
+      {
+        title: "Country",
+        dataIndex: "country",
+        key: "country",
+        sorter: (a, b) => a.country.localeCompare(b.country),
+        responsive: ["md"],
+      },
+      {
+        title: "Climate",
+        dataIndex: "climate",
+        key: "climate",
+        responsive: ["lg"],
+      },
+      {
+        title: "Best Time to Visit",
+        dataIndex: "bestTimeToVisit",
+        key: "bestTimeToVisit",
+        responsive: ["lg"],
+      },
+      {
+        title: "Actions",
+        key: "actions",
+        render: (_, record) => (
+          <Space size="small" wrap>
+            {windowWidth <= 576 ? (
+              <>
+                <Tooltip title="View Details">
+                  <Button type="primary" icon={<EyeOutlined />} onClick={() => showModal(record)} size="small" />
+                </Tooltip>
+                <Tooltip title="Delete">
+                  <Popconfirm
+                    title="Delete this destination?"
+                    onConfirm={() => handleDelete(record.id)}
+                    okText="Yes"
+                    cancelText="No"
+                  >
+                    <Button type="primary" danger icon={<DeleteOutlined />} size="small" />
+                  </Popconfirm>
+                </Tooltip>
+              </>
+            ) : (
+              <>
+                <Button type="primary" icon={<EditOutlined />} onClick={() => showModal(record)}>
+                  {windowWidth > 768 ? "Edit" : ""}
+                </Button>
+                <Popconfirm
+                  title="Are you sure you want to delete this destination?"
+                  onConfirm={() => handleDelete(record.id)}
+                  okText="Yes"
+                  cancelText="No"
+                >
+                  <Button type="primary" danger icon={<DeleteOutlined />}>
+                    {windowWidth > 768 ? "Delete" : ""}
+                  </Button>
+                </Popconfirm>
+              </>
+            )}
+          </Space>
+        ),
+      },
+    ]
+
+    return baseColumns
+  }
 
   return (
     <div className="admin-manage-page">
@@ -238,7 +276,7 @@ const ManageDestinations = () => {
 
       <Card>
         <Table
-          columns={columns}
+          columns={getColumns()}
           dataSource={destinations}
           rowKey="id"
           loading={loading}
@@ -258,7 +296,12 @@ const ManageDestinations = () => {
               </div>
             ),
           }}
-          responsive
+          scroll={{ x: "max-content" }}
+          pagination={{
+            responsive: true,
+            showSizeChanger: windowWidth > 576,
+            defaultPageSize: windowWidth <= 576 ? 5 : 10,
+          }}
         />
       </Card>
 
@@ -267,7 +310,8 @@ const ManageDestinations = () => {
         open={isModalVisible}
         onCancel={handleCancel}
         footer={null}
-        width={800}
+        width={windowWidth < 768 ? "95%" : 800}
+        destroyOnClose={true}
       >
         <Form form={form} layout="vertical" onFinish={handleSubmit}>
           <Row gutter={16}>
@@ -335,30 +379,32 @@ const ManageDestinations = () => {
               </>
             )}
           </Form.List>
-          <Form.Item label="Destination Image" rules={[{ required: true, message: "Please upload an image" }]}>
-  <Upload
-    name="image"
-    listType="picture-card"
-    fileList={fileList}
-    onChange={handleImageChange}
-    onRemove={() => {
-      setPreviewImage("")
-      setImageUrl("")
-      setFileList([])
-    }}
-  >
-    {fileList.length >= 1 ? null : (
-      <div>
-        <UploadOutlined />
-        <div style={{ marginTop: 8 }}>Upload</div>
-      </div>
-    )}
-  </Upload>
-</Form.Item>
 
+          <Form.Item label="Destination Image" rules={[{ required: true, message: "Please upload an image" }]}>
+            <Upload
+              name="image"
+              listType="picture-card"
+              fileList={fileList}
+              beforeUpload={() => false}
+              onChange={handleImageChange}
+              onRemove={() => {
+                setPreviewImage("")
+                setImageUrl("")
+                setFileList([])
+              }}
+              maxCount={1}
+            >
+              {fileList.length >= 1 ? null : (
+                <div>
+                  <UploadOutlined />
+                  <div style={{ marginTop: 8 }}>Upload</div>
+                </div>
+              )}
+            </Upload>
+          </Form.Item>
 
           <Form.Item>
-            <Space>
+            <Space style={{ display: "flex", justifyContent: windowWidth < 576 ? "center" : "flex-start" }}>
               <Button type="primary" htmlType="submit">
                 {editingDestination ? "Update Destination" : "Add Destination"}
               </Button>

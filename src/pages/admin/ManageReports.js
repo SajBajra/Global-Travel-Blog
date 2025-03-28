@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react"
-import axios from "axios"
-import { toast } from "react-toastify"
+import { reportUtil, blogUtil, commentUtil, toastUtil } from "../../util"
 import {
   Table,
   Button,
@@ -16,6 +15,7 @@ import {
   Tabs,
   Divider,
   Alert,
+  Tooltip,
 } from "antd"
 import { CheckCircleOutlined, CloseCircleOutlined, EyeOutlined, DeleteOutlined, LinkOutlined } from "@ant-design/icons"
 import { Link } from "react-router-dom"
@@ -32,19 +32,28 @@ const ManageReports = () => {
   const [reportContent, setReportContent] = useState(null)
   const [activeTab, setActiveTab] = useState("pending")
   const [users, setUsers] = useState([])
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth)
 
   useEffect(() => {
     fetchReports()
     fetchUsers()
+
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth)
+    }
+
+    window.addEventListener("resize", handleResize)
+    return () => {
+      window.removeEventListener("resize", handleResize)
+    }
   }, [])
 
   const fetchReports = async () => {
     try {
-      const response = await axios.get("http://localhost:3001/reports?_sort=createdAt&_order=desc")
-      setReports(response.data)
+      const reportsData = await reportUtil.getAllReports()
+      setReports(reportsData)
     } catch (error) {
       console.error("Error fetching reports:", error)
-      toast.error("Failed to load reports")
     } finally {
       setLoading(false)
     }
@@ -52,8 +61,11 @@ const ManageReports = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get("http://localhost:3001/users")
-      setUsers(response.data)
+      // We'll use a direct API call here since userUtil doesn't have a getAllUsers method
+      // In a real application, you would add this method to userUtil
+      const response = await fetch("http://localhost:3001/users")
+      const data = await response.json()
+      setUsers(data)
     } catch (error) {
       console.error("Error fetching users:", error)
     }
@@ -71,19 +83,22 @@ const ManageReports = () => {
     try {
       // Fetch the reported content (blog or comment)
       if (report.type === "blog" && report.blogId) {
-        const blogResponse = await axios.get(`http://localhost:3001/blogs/${report.blogId}`)
-        setReportContent(blogResponse.data)
+        const blogData = await blogUtil.getBlogById(report.blogId)
+        setReportContent(blogData)
       } else if (report.type === "comment" && report.commentId) {
-        const commentResponse = await axios.get(`http://localhost:3001/comments/${report.commentId}`)
-        setReportContent(commentResponse.data)
+        // We'll use a direct API call here since commentUtil doesn't have a getCommentById method
+        // In a real application, you would add this method to commentUtil
+        const response = await fetch(`http://localhost:3001/comments/${report.commentId}`)
+        const commentData = await response.json()
+        setReportContent(commentData)
 
         // If it's a comment, also fetch the associated blog
-        if (commentResponse.data.blogId) {
-          const blogResponse = await axios.get(`http://localhost:3001/blogs/${commentResponse.data.blogId}`)
+        if (commentData.blogId) {
+          const blogData = await blogUtil.getBlogById(commentData.blogId)
           setReportContent((prev) => ({
             ...prev,
-            blogTitle: blogResponse.data.title,
-            blogId: blogResponse.data.id,
+            blogTitle: blogData.title,
+            blogId: blogData.id,
           }))
         }
       }
@@ -91,9 +106,9 @@ const ManageReports = () => {
       console.error("Error fetching reported content:", error)
       if (error.response && error.response.status === 404) {
         setReportContent({ notFound: true })
-        toast.error("The reported content has already been deleted")
+        toastUtil.error("The reported content has already been deleted")
       } else {
-        toast.error("Failed to load reported content")
+        toastUtil.error("Failed to load reported content")
       }
     }
   }
@@ -106,73 +121,63 @@ const ManageReports = () => {
 
   const handleApproveReport = async (id) => {
     try {
-      // Update report status
-      await axios.patch(`http://localhost:3001/reports/${id}`, {
-        status: "resolved",
-        resolvedAt: new Date().toISOString(),
-      })
+      const result = await reportUtil.updateReportStatus(id, "resolved")
 
-      // Update local state
-      setReports(
-        reports.map((report) =>
-          report.id === id
-            ? {
-                ...report,
-                status: "resolved",
-                resolvedAt: new Date().toISOString(),
-              }
-            : report,
-        ),
-      )
+      if (result.success) {
+        // Update local state
+        setReports(
+          reports.map((report) =>
+            report.id === id
+              ? {
+                  ...report,
+                  status: "resolved",
+                  resolvedAt: new Date().toISOString(),
+                }
+              : report,
+          ),
+        )
 
-      toast.success("Report marked as resolved")
-
-      if (selectedReport && selectedReport.id === id) {
-        setSelectedReport({
-          ...selectedReport,
-          status: "resolved",
-          resolvedAt: new Date().toISOString(),
-        })
+        if (selectedReport && selectedReport.id === id) {
+          setSelectedReport({
+            ...selectedReport,
+            status: "resolved",
+            resolvedAt: new Date().toISOString(),
+          })
+        }
       }
     } catch (error) {
       console.error("Error approving report:", error)
-      toast.error("Failed to approve report")
     }
   }
 
   const handleRejectReport = async (id) => {
     try {
-      // Update report status
-      await axios.patch(`http://localhost:3001/reports/${id}`, {
-        status: "rejected",
-        resolvedAt: new Date().toISOString(),
-      })
+      const result = await reportUtil.updateReportStatus(id, "rejected")
 
-      // Update local state
-      setReports(
-        reports.map((report) =>
-          report.id === id
-            ? {
-                ...report,
-                status: "rejected",
-                resolvedAt: new Date().toISOString(),
-              }
-            : report,
-        ),
-      )
+      if (result.success) {
+        // Update local state
+        setReports(
+          reports.map((report) =>
+            report.id === id
+              ? {
+                  ...report,
+                  status: "rejected",
+                  resolvedAt: new Date().toISOString(),
+                }
+              : report,
+          ),
+        )
 
-      toast.success("Report rejected")
-
-      if (selectedReport && selectedReport.id === id) {
-        setSelectedReport({
-          ...selectedReport,
-          status: "rejected",
-          resolvedAt: new Date().toISOString(),
-        })
+        if (selectedReport && selectedReport.id === id) {
+          setSelectedReport({
+            ...selectedReport,
+            status: "rejected",
+            resolvedAt: new Date().toISOString(),
+          })
+        }
       }
     } catch (error) {
       console.error("Error rejecting report:", error)
-      toast.error("Failed to reject report")
     }
   }
 
@@ -180,33 +185,44 @@ const ManageReports = () => {
     try {
       if (report.type === "blog" && report.blogId) {
         // Delete the blog
-        await axios.delete(`http://localhost:3001/blogs/${report.blogId}`)
+        await blogUtil.deleteBlog(report.blogId)
 
         // Also delete all comments associated with this blog
-        const commentsResponse = await axios.get(`http://localhost:3001/comments?blogId=${report.blogId}`)
-        for (const comment of commentsResponse.data) {
-          await axios.delete(`http://localhost:3001/comments/${comment.id}`)
+        // We'll use a direct API call here since commentUtil doesn't have a method for this
+        const commentsResponse = await fetch(`http://localhost:3001/comments?blogId=${report.blogId}`)
+        const commentsData = await commentsResponse.json()
+
+        for (const comment of commentsData) {
+          await commentUtil.deleteComment(comment.id)
         }
 
-        toast.success("Blog and its comments deleted successfully")
+        toastUtil.success("Blog and its comments deleted successfully")
       } else if (report.type === "comment" && report.commentId) {
         // Delete the comment
-        await axios.delete(`http://localhost:3001/comments/${report.commentId}`)
+        await commentUtil.deleteComment(report.commentId)
 
         // Also delete all replies to this comment
-        const repliesResponse = await axios.get(`http://localhost:3001/comments?parentId=${report.commentId}`)
-        for (const reply of repliesResponse.data) {
-          await axios.delete(`http://localhost:3001/comments/${reply.id}`)
+        const repliesResponse = await fetch(`http://localhost:3001/comments?parentId=${report.commentId}`)
+        const repliesData = await repliesResponse.json()
+
+        for (const reply of repliesData) {
+          await commentUtil.deleteComment(reply.id)
         }
 
-        toast.success("Comment and its replies deleted successfully")
+        toastUtil.success("Comment and its replies deleted successfully")
       }
 
       // Update report status
-      await axios.patch(`http://localhost:3001/reports/${report.id}`, {
-        status: "resolved",
-        resolvedAt: new Date().toISOString(),
-        actionTaken: "deleted",
+      await fetch(`http://localhost:3001/reports/${report.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          status: "resolved",
+          resolvedAt: new Date().toISOString(),
+          actionTaken: "deleted",
+        }),
       })
 
       // Update local state
@@ -230,7 +246,7 @@ const ManageReports = () => {
       }, 2000)
     } catch (error) {
       console.error("Error deleting reported content:", error)
-      toast.error("Failed to delete reported content")
+      toastUtil.error("Failed to delete reported content")
     }
   }
 
@@ -249,58 +265,100 @@ const ManageReports = () => {
 
   const filteredReports = reports.filter((report) => report.status === activeTab)
 
-  const columns = [
-    {
-      title: "Type",
-      dataIndex: "type",
-      key: "type",
-      render: (type) => <Tag color={type === "blog" ? "blue" : "green"}>{type.toUpperCase()}</Tag>,
-    },
-    {
-      title: "Reported By",
-      key: "reportedBy",
-      render: (_, record) => <span>{getUserName(record.userId)}</span>,
-    },
-    {
-      title: "Reason",
-      dataIndex: "reason",
-      key: "reason",
-      render: (reason) => reason || "No reason provided",
-    },
-    {
-      title: "Date",
-      dataIndex: "createdAt",
-      key: "createdAt",
-      render: (date) => new Date(date).toLocaleDateString(),
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (status) => getStatusBadge(status),
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      render: (_, record) => (
-        <Space size="small">
-          <Button icon={<EyeOutlined />} onClick={() => showDrawer(record)}>
-            View
-          </Button>
-          {record.status === "pending" && (
-            <>
-              <Button type="primary" icon={<CheckCircleOutlined />} onClick={() => handleApproveReport(record.id)}>
-                Approve
-              </Button>
-              <Button danger icon={<CloseCircleOutlined />} onClick={() => handleRejectReport(record.id)}>
-                Reject
-              </Button>
-            </>
-          )}
-        </Space>
-      ),
-    },
-  ]
+  const getColumns = () => {
+    const baseColumns = [
+      {
+        title: "Type",
+        dataIndex: "type",
+        key: "type",
+        render: (type) => <Tag color={type === "blog" ? "blue" : "green"}>{type.toUpperCase()}</Tag>,
+      },
+      {
+        title: "Reported By",
+        key: "reportedBy",
+        render: (_, record) => <span>{getUserName(record.userId)}</span>,
+        responsive: ["md"],
+      },
+      {
+        title: "Reason",
+        dataIndex: "reason",
+        key: "reason",
+        render: (reason) => reason || "No reason provided",
+        ellipsis: true,
+        responsive: ["lg"],
+      },
+      {
+        title: "Date",
+        dataIndex: "createdAt",
+        key: "createdAt",
+        render: (date) => new Date(date).toLocaleDateString(),
+        responsive: ["md"],
+      },
+      {
+        title: "Status",
+        dataIndex: "status",
+        key: "status",
+        render: (status) => getStatusBadge(status),
+      },
+      {
+        title: "Actions",
+        key: "actions",
+        render: (_, record) => (
+          <Space size="small" wrap>
+            {windowWidth <= 576 ? (
+              <>
+                <Tooltip title="View">
+                  <Button icon={<EyeOutlined />} onClick={() => showDrawer(record)} size="small" />
+                </Tooltip>
+                {record.status === "pending" && (
+                  <>
+                    <Tooltip title="Approve">
+                      <Button
+                        type="primary"
+                        icon={<CheckCircleOutlined />}
+                        onClick={() => handleApproveReport(record.id)}
+                        size="small"
+                      />
+                    </Tooltip>
+                    <Tooltip title="Reject">
+                      <Button
+                        danger
+                        icon={<CloseCircleOutlined />}
+                        onClick={() => handleRejectReport(record.id)}
+                        size="small"
+                      />
+                    </Tooltip>
+                  </>
+                )}
+              </>
+            ) : (
+              <>
+                <Button icon={<EyeOutlined />} onClick={() => showDrawer(record)}>
+                  {windowWidth > 768 ? "View" : ""}
+                </Button>
+                {record.status === "pending" && (
+                  <>
+                    <Button
+                      type="primary"
+                      icon={<CheckCircleOutlined />}
+                      onClick={() => handleApproveReport(record.id)}
+                    >
+                      {windowWidth > 768 ? "Approve" : ""}
+                    </Button>
+                    <Button danger icon={<CloseCircleOutlined />} onClick={() => handleRejectReport(record.id)}>
+                      {windowWidth > 768 ? "Reject" : ""}
+                    </Button>
+                  </>
+                )}
+              </>
+            )}
+          </Space>
+        ),
+      },
+    ]
+
+    return baseColumns
+  }
 
   return (
     <div className="admin-manage-page">
@@ -317,7 +375,39 @@ const ManageReports = () => {
           <TabPane tab={`Rejected (${reports.filter((r) => r.status === "rejected").length})`} key="rejected" />
         </Tabs>
 
-        <Table columns={columns} dataSource={filteredReports} rowKey="id" loading={loading} />
+        <Table
+          columns={getColumns()}
+          dataSource={filteredReports}
+          rowKey="id"
+          loading={loading}
+          scroll={{ x: "max-content" }}
+          pagination={{
+            responsive: true,
+            showSizeChanger: windowWidth > 576,
+            defaultPageSize: windowWidth <= 576 ? 5 : 10,
+          }}
+          expandable={{
+            expandedRowRender: (record) => (
+              <div style={{ margin: 0 }}>
+                {windowWidth <= 768 && (
+                  <>
+                    <p>
+                      <strong>Reported By:</strong> {getUserName(record.userId)}
+                    </p>
+                    <p>
+                      <strong>Date:</strong> {new Date(record.createdAt).toLocaleDateString()}
+                    </p>
+                  </>
+                )}
+                {windowWidth <= 992 && (
+                  <p>
+                    <strong>Reason:</strong> {record.reason || "No reason provided"}
+                  </p>
+                )}
+              </div>
+            ),
+          }}
+        />
       </Card>
 
       <Drawer
@@ -325,7 +415,7 @@ const ManageReports = () => {
         placement="right"
         onClose={closeDrawer}
         open={drawerVisible}
-        width={600}
+        width={windowWidth < 768 ? "100%" : 600}
         extra={
           selectedReport &&
           selectedReport.status === "pending" && (
@@ -346,7 +436,12 @@ const ManageReports = () => {
       >
         {selectedReport && (
           <>
-            <Descriptions title="Report Information" bordered column={1}>
+            <Descriptions
+              title="Report Information"
+              bordered
+              column={1}
+              layout={windowWidth < 576 ? "vertical" : "horizontal"}
+            >
               <Descriptions.Item label="Type">
                 <Tag color={selectedReport.type === "blog" ? "blue" : "green"}>{selectedReport.type.toUpperCase()}</Tag>
               </Descriptions.Item>
@@ -394,7 +489,7 @@ const ManageReports = () => {
                   <>
                     {selectedReport.type === "blog" ? (
                       <>
-                        <Descriptions bordered column={1}>
+                        <Descriptions bordered column={1} layout={windowWidth < 576 ? "vertical" : "horizontal"}>
                           <Descriptions.Item label="Blog Title">{reportContent.title}</Descriptions.Item>
                           <Descriptions.Item label="Author">{reportContent.authorName}</Descriptions.Item>
                           <Descriptions.Item label="View Blog">
@@ -410,7 +505,7 @@ const ManageReports = () => {
                       </>
                     ) : (
                       <>
-                        <Descriptions bordered column={1}>
+                        <Descriptions bordered column={1} layout={windowWidth < 576 ? "vertical" : "horizontal"}>
                           <Descriptions.Item label="Comment By">{reportContent.userName}</Descriptions.Item>
                           {reportContent.blogTitle && (
                             <>

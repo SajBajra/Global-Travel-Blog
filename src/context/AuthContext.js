@@ -1,6 +1,5 @@
 import { createContext, useState, useEffect } from "react"
-import axios from "axios"
-import { toast } from "react-toastify"
+import { userUtil, toastUtil } from "../util"
 
 export const AuthContext = createContext()
 
@@ -15,9 +14,9 @@ export const AuthProvider = ({ children }) => {
       try {
         const userId = localStorage.getItem("userId")
         if (userId) {
-          const response = await axios.get(`http://localhost:3001/users/${userId}`)
-          setCurrentUser(response.data)
-          setIsAdmin(response.data.role === "admin")
+          const user = await userUtil.getUserById(userId)
+          setCurrentUser(user)
+          setIsAdmin(user.role === "admin")
         }
       } catch (error) {
         console.error("Error checking login status:", error)
@@ -32,58 +31,43 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await axios.get(`http://localhost:3001/users?email=${email}`)
+      const result = await userUtil.login(email, password)
 
-      if (response.data.length === 0) {
-        toast.error("User not found")
-        return false
+      if (result.success) {
+        setCurrentUser(result.user)
+        setIsAdmin(result.user.role === "admin")
+        localStorage.setItem("userId", result.user.id)
+        return true
       }
 
-      const user = response.data[0]
-
-      if (user.password !== password) {
-        toast.error("Invalid password")
-        return false
-      }
-
-      setCurrentUser(user)
-      setIsAdmin(user.role === "admin")
-      localStorage.setItem("userId", user.id)
-      toast.success("Login successful")
-      return true
+      return false
     } catch (error) {
       console.error("Login error:", error)
-      toast.error("Login failed")
+      toastUtil.error("Login failed")
       return false
     }
   }
 
   const signup = async (name, email, password) => {
     try {
-      const checkUser = await axios.get(`http://localhost:3001/users?email=${email}`)
-
-      if (checkUser.data.length > 0) {
-        toast.error("User already exists")
-        return false
-      }
-
-      const newUser = {
+      const userData = {
         name,
         email,
         password,
-        role: "user",
-        profilePic: "/default-profile.jpg",
-        createdAt: new Date().toISOString(),
       }
 
-      const response = await axios.post("http://localhost:3001/users", newUser)
-      setCurrentUser(response.data)
-      localStorage.setItem("userId", response.data.id)
-      toast.success("Signup successful")
-      return true
+      const result = await userUtil.signup(userData)
+
+      if (result.success) {
+        setCurrentUser(result.user)
+        localStorage.setItem("userId", result.user.id)
+        return true
+      }
+
+      return false
     } catch (error) {
       console.error("Signup error:", error)
-      toast.error("Signup failed")
+      toastUtil.error("Signup failed")
       return false
     }
   }
@@ -92,38 +76,35 @@ export const AuthProvider = ({ children }) => {
     setCurrentUser(null)
     setIsAdmin(false)
     localStorage.removeItem("userId")
-    toast.success("Logged out successfully")
+    toastUtil.success("Logged out successfully")
   }
 
   const updateProfile = async (userData) => {
     try {
-      const response = await axios.patch(`http://localhost:3001/users/${currentUser.id}`, userData)
-      setCurrentUser(response.data)
-      toast.success("Profile updated successfully")
-      return true
+      const result = await userUtil.updateProfile(currentUser.id, userData)
+
+      if (result.success) {
+        setCurrentUser(result.user)
+        return true
+      }
+
+      return false
     } catch (error) {
       console.error("Update profile error:", error)
-      toast.error("Failed to update profile")
+      toastUtil.error("Failed to update profile")
       return false
     }
   }
 
   const uploadProfilePicture = async (file) => {
-    return new Promise((resolve) => {
-      const reader = new FileReader()
-      reader.onloadend = async () => {
-        try {
-          const imageUrl = reader.result
-          await updateProfile({ profilePic: imageUrl })
-          resolve(true)
-        } catch (error) {
-          console.error("Upload error:", error)
-          toast.error("Failed to upload profile picture")
-          resolve(false)
-        }
-      }
-      reader.readAsDataURL(file)
-    })
+    try {
+      const result = await userUtil.uploadProfilePicture(currentUser.id, file)
+      return result.success
+    } catch (error) {
+      console.error("Upload error:", error)
+      toastUtil.error("Failed to upload profile picture")
+      return false
+    }
   }
 
   const value = {

@@ -1,6 +1,6 @@
 import { useState, useContext, useEffect } from "react"
 import { AuthContext } from "../context/AuthContext"
-import axios from "axios"
+import { blogUtil } from "../util"
 import "./Profile.css"
 
 const Profile = () => {
@@ -27,8 +27,8 @@ const Profile = () => {
       // Fetch user's blogs
       const fetchUserBlogs = async () => {
         try {
-          const response = await axios.get(`http://localhost:3001/blogs?authorId=${currentUser.id}`)
-          setBlogs(response.data)
+          const userBlogs = await blogUtil.getBlogsByAuthor(currentUser.id)
+          setBlogs(userBlogs)
         } catch (error) {
           console.error("Error fetching user blogs:", error)
         } finally {

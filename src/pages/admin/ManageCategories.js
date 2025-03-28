@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react"
-import axios from "axios"
-import { toast } from "react-toastify"
-import { Table, Button, Space, Modal, Form, Input, Typography, Popconfirm, Card, Row, Col, Tag } from "antd"
+import { categoryUtil } from "../../util"
+import { Table, Button, Space, Modal, Form, Input, Typography, Popconfirm, Card, Row, Col, Tag, Tooltip } from "antd"
 import { PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons"
 import "./AdminPages.css"
 
@@ -13,18 +12,27 @@ const ManageCategories = () => {
   const [isModalVisible, setIsModalVisible] = useState(false)
   const [editingCategory, setEditingCategory] = useState(null)
   const [form] = Form.useForm()
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth)
 
   useEffect(() => {
     fetchCategories()
+
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth)
+    }
+
+    window.addEventListener("resize", handleResize)
+    return () => {
+      window.removeEventListener("resize", handleResize)
+    }
   }, [])
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get("http://localhost:3001/categories")
-      setCategories(response.data)
+      const categoriesData = await categoryUtil.getAllCategories()
+      setCategories(categoriesData)
     } catch (error) {
       console.error("Error fetching categories:", error)
-      toast.error("Failed to load categories")
     } finally {
       setLoading(false)
     }
@@ -50,77 +58,92 @@ const ManageCategories = () => {
 
   const handleDelete = async (id) => {
     try {
-      // Check if category is in use
-      const blogsResponse = await axios.get(
-        `http://localhost:3001/blogs?category=${categories.find((c) => c.id === id).name}`,
-      )
-
-      if (blogsResponse.data.length > 0) {
-        toast.error("Cannot delete category that is in use by blogs")
-        return
+      const result = await categoryUtil.deleteCategory(id)
+      if (result.success) {
+        setCategories((prev) => prev.filter((cat) => cat.id !== id))
       }
-
-      await axios.delete(`http://localhost:3001/categories/${id}`)
-      setCategories((prev) => prev.filter((cat) => cat.id !== id))
-      toast.success("Category deleted successfully")
     } catch (error) {
       console.error("Error deleting category:", error)
-      toast.error("Failed to delete category")
     }
   }
 
   const handleSubmit = async (values) => {
     try {
+      let result
       if (editingCategory) {
-        await axios.put(`http://localhost:3001/categories/${editingCategory.id}`, values)
-        toast.success("Category updated successfully")
+        result = await categoryUtil.updateCategory(editingCategory.id, values.name)
       } else {
-        await axios.post("http://localhost:3001/categories", values)
-        toast.success("Category added successfully")
+        result = await categoryUtil.addCategory(values.name)
       }
 
-      setIsModalVisible(false)
-      fetchCategories()
+      if (result.success) {
+        setIsModalVisible(false)
+        fetchCategories()
+      }
     } catch (error) {
       console.error("Error saving category:", error)
-      toast.error("Failed to save category")
     }
   }
 
-  const columns = [
-    {
-      title: "ID",
-      dataIndex: "id",
-      key: "id",
-    },
-    {
-      title: "Name",
-      dataIndex: "name",
-      key: "name",
-      render: (name) => <Tag color="blue">{name}</Tag>,
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      render: (_, record) => (
-        <Space size="middle">
-          <Button type="primary" icon={<EditOutlined />} onClick={() => showModal(record)}>
-            Edit
-          </Button>
-          <Popconfirm
-            title="Are you sure you want to delete this category?"
-            onConfirm={() => handleDelete(record.id)}
-            okText="Yes"
-            cancelText="No"
-          >
-            <Button type="primary" danger icon={<DeleteOutlined />}>
-              Delete
-            </Button>
-          </Popconfirm>
-        </Space>
-      ),
-    },
-  ]
+  const getColumns = () => {
+    const baseColumns = [
+      {
+        title: "ID",
+        dataIndex: "id",
+        key: "id",
+        responsive: ["md"],
+      },
+      {
+        title: "Name",
+        dataIndex: "name",
+        key: "name",
+        render: (name) => <Tag color="blue">{name}</Tag>,
+      },
+      {
+        title: "Actions",
+        key: "actions",
+        render: (_, record) => (
+          <Space size="small">
+            {windowWidth <= 576 ? (
+              <>
+                <Tooltip title="Edit">
+                  <Button type="primary" icon={<EditOutlined />} onClick={() => showModal(record)} size="small" />
+                </Tooltip>
+                <Tooltip title="Delete">
+                  <Popconfirm
+                    title="Delete this category?"
+                    onConfirm={() => handleDelete(record.id)}
+                    okText="Yes"
+                    cancelText="No"
+                  >
+                    <Button type="primary" danger icon={<DeleteOutlined />} size="small" />
+                  </Popconfirm>
+                </Tooltip>
+              </>
+            ) : (
+              <>
+                <Button type="primary" icon={<EditOutlined />} onClick={() => showModal(record)}>
+                  {windowWidth > 768 ? "Edit" : ""}
+                </Button>
+                <Popconfirm
+                  title="Are you sure you want to delete this category?"
+                  onConfirm={() => handleDelete(record.id)}
+                  okText="Yes"
+                  cancelText="No"
+                >
+                  <Button type="primary" danger icon={<DeleteOutlined />}>
+                    {windowWidth > 768 ? "Delete" : ""}
+                  </Button>
+                </Popconfirm>
+              </>
+            )}
+          </Space>
+        ),
+      },
+    ]
+
+    return baseColumns
+  }
 
   return (
     <div className="admin-manage-page">
@@ -136,7 +159,18 @@ const ManageCategories = () => {
       </Row>
 
       <Card>
-        <Table columns={columns} dataSource={categories} rowKey="id" loading={loading} />
+        <Table
+          columns={getColumns()}
+          dataSource={categories}
+          rowKey="id"
+          loading={loading}
+          scroll={{ x: "max-content" }}
+          pagination={{
+            responsive: true,
+            showSizeChanger: windowWidth > 576,
+            defaultPageSize: windowWidth <= 576 ? 5 : 10,
+          }}
+        />
       </Card>
 
       <Modal
@@ -144,6 +178,8 @@ const ManageCategories = () => {
         open={isModalVisible}
         onCancel={handleCancel}
         footer={null}
+        width={windowWidth < 768 ? "95%" : 500}
+        destroyOnClose={true}
       >
         <Form form={form} layout="vertical" onFinish={handleSubmit}>
           <Form.Item
@@ -155,7 +191,7 @@ const ManageCategories = () => {
           </Form.Item>
 
           <Form.Item>
-            <Space>
+            <Space style={{ display: "flex", justifyContent: windowWidth < 576 ? "center" : "flex-start" }}>
               <Button type="primary" htmlType="submit">
                 {editingCategory ? "Update Category" : "Add Category"}
               </Button>

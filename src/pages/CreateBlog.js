@@ -1,9 +1,8 @@
 import { useState, useEffect, useContext, useRef } from "react"
 import { useNavigate } from "react-router-dom"
-import axios from "axios"
-import { toast } from "react-toastify"
 import { AuthContext } from "../context/AuthContext"
 import { FiImage, FiX, FiArrowLeft, FiCheck, FiFileText, FiTag, FiEdit3 } from "react-icons/fi"
+import { blogUtil, categoryUtil, toastUtil } from "../util"
 import "./CreateBlog.css"
 
 const CreateBlog = () => {
@@ -31,11 +30,10 @@ const CreateBlog = () => {
     const fetchData = async () => {
       try {
         // Fetch categories
-        const categoriesRes = await axios.get("http://localhost:3001/categories")
-        setCategories(categoriesRes.data)
+        const categoriesData = await categoryUtil.getAllCategories()
+        setCategories(categoriesData)
       } catch (error) {
         console.error("Error fetching data:", error)
-        toast.error("Failed to load form data")
       } finally {
         setLoading(false)
       }
@@ -115,7 +113,7 @@ const CreateBlog = () => {
     e.preventDefault()
 
     if (!formData.title || !formData.content || !formData.category || !formData.imageUrl) {
-      toast.error("Please fill all required fields")
+      toastUtil.error("Please fill all required fields")
       return
     }
 
@@ -126,17 +124,15 @@ const CreateBlog = () => {
         ...formData,
         authorId: currentUser.id,
         authorName: currentUser.name,
-        createdAt: new Date().toISOString(),
-        status: "approved", // Blogs are now automatically approved
-        likes: 0,
       }
 
-      await axios.post("http://localhost:3001/blogs", blogData)
-      toast.success("Blog published successfully")
-      navigate("/blogs")
+      const result = await blogUtil.createBlog(blogData)
+
+      if (result.success) {
+        navigate("/blogs")
+      }
     } catch (error) {
       console.error("Error creating blog:", error)
-      toast.error("Failed to create blog")
     } finally {
       setSubmitting(false)
     }
