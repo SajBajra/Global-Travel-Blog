@@ -83,8 +83,14 @@ const ManageReports = () => {
     try {
       // Fetch the reported content (blog or comment)
       if (report.type === "blog" && report.blogId) {
-        const blogData = await blogUtil.getBlogById(report.blogId)
-        setReportContent(blogData)
+        try {
+          const blogData = await blogUtil.getBlogById(report.blogId)
+          setReportContent(blogData)
+        } catch (error) {
+          console.error("Error fetching blog:", error)
+          setReportContent({ notFound: true })
+          toastUtil.error("The reported blog could not be found or has been deleted")
+        }
       } else if (report.type === "comment" && report.commentId) {
         // We'll use a direct API call here since commentUtil doesn't have a getCommentById method
         // In a real application, you would add this method to commentUtil
@@ -183,12 +189,17 @@ const ManageReports = () => {
 
   const handleDeleteReportedContent = async (report) => {
     try {
+      let successMessage = ""
+
       if (report.type === "blog" && report.blogId) {
-        // Delete the blog
-        await blogUtil.deleteBlog(report.blogId)
+        // Delete the blog using blogUtil
+        const blogDeleteResult = await blogUtil.deleteBlog(report.blogId)
+
+        if (!blogDeleteResult.success) {
+          throw new Error("Failed to delete blog")
+        }
 
         // Also delete all comments associated with this blog
-        // We'll use a direct API call here since commentUtil doesn't have a method for this
         const commentsResponse = await fetch(`http://localhost:3001/comments?blogId=${report.blogId}`)
         const commentsData = await commentsResponse.json()
 
@@ -196,7 +207,7 @@ const ManageReports = () => {
           await commentUtil.deleteComment(comment.id)
         }
 
-        toastUtil.success("Blog and its comments deleted successfully")
+        successMessage = "Blog and its comments deleted successfully"
       } else if (report.type === "comment" && report.commentId) {
         // Delete the comment
         await commentUtil.deleteComment(report.commentId)
@@ -209,7 +220,7 @@ const ManageReports = () => {
           await commentUtil.deleteComment(reply.id)
         }
 
-        toastUtil.success("Comment and its replies deleted successfully")
+        successMessage = "Comment and its replies deleted successfully"
       }
 
       // Update report status
@@ -241,12 +252,15 @@ const ManageReports = () => {
 
       setReportContent({ deleted: true })
 
+      // Show a single success toast
+      toastUtil.success(successMessage)
+
       setTimeout(() => {
         closeDrawer()
       }, 2000)
     } catch (error) {
       console.error("Error deleting reported content:", error)
-      toastUtil.error("Failed to delete reported content")
+      toastUtil.error("Failed to delete reported content: " + (error.message || "Unknown error"))
     }
   }
 

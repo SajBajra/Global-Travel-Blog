@@ -107,12 +107,6 @@ const AdminPanel = () => {
               prefix={<FileTextOutlined />}
               valueStyle={{ color: "#3498db", fontSize: windowWidth < 576 ? "1.2rem" : "1.5rem" }}
             />
-            <div className="stat-footer">
-              <Badge count={stats.pendingBlogs} style={{ backgroundColor: "#faad14" }} />
-              <Text type="secondary" style={{ fontSize: windowWidth < 576 ? "0.7rem" : "0.8rem" }}>
-                Pending approval
-              </Text>
-            </div>
           </Card>
         </Col>
         <Col xs={12} sm={8} md={8} lg={4}>
