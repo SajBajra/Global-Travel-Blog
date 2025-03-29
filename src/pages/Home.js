@@ -148,7 +148,7 @@ const Home = () => {
             <div className="contact-card">
               <FaMapMarkerAlt className="contact-icon" />
               <h3>Our Location</h3>
-              <p>123 Travel Street, Kathmandu, Nepal</p>
+              <p>Chapagaun, Lalitpur, Nepal</p>
             </div>
 
             <div className="contact-card">
@@ -165,15 +165,15 @@ const Home = () => {
           </div>
 
           <div className="contact-map">
-            <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d56516.31625953805!2d85.29111337431642!3d27.70895594443863!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39eb198a307baabf%3A0xb5137c1bf18db1ea!2sKathmandu%2044600%2C%20Nepal!5e0!3m2!1sen!2sus!4v1647887322329!5m2!1sen!2sus"
-              width="100%"
-              height="100%"
-              style={{ border: 0 }}
-              allowFullScreen=""
-              loading="lazy"
-              title="Map of Nepal"
-            ></iframe>
+         <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3533.082888785083!2d85.3605289744873!3d27.63374897653808!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39eb1f70aea9b197%3A0x732b3f2c75183159!2sChapagaun%2C%20Lalitpur!5e0!3m2!1sen!2snp!4v1711741558917!5m2!1sen!2snp"
+            width="100%"
+            height="100%"
+            style={{ border: 0 }}
+            allowFullScreen=""
+            loading="lazy"
+            title="Map of Chapagaun Lalitpur"
+          ></iframe>
           </div>
         </div>
       </section>

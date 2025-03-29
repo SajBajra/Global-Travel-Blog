@@ -103,19 +103,6 @@ const ManageBlogs = () => {
     selectedCategory ? blog.category === selectedCategory : true
   );
 
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case "approved":
-        return <Badge status="success" text="Approved" />;
-      case "rejected":
-        return <Badge status="error" text="Rejected" />;
-      case "pending":
-        return <Badge status="processing" text="Pending" />;
-      default:
-        return <Badge status="default" text={status} />;
-    }
-  };
-
   const getColumns = () => {
     const baseColumns = [
       {
@@ -295,7 +282,6 @@ const ManageBlogs = () => {
               <Descriptions.Item label="Date">
                 {new Date(selectedBlog.createdAt).toLocaleDateString()}
               </Descriptions.Item>
-              <Descriptions.Item label="Status">{getStatusBadge(selectedBlog.status)}</Descriptions.Item>
               <Descriptions.Item label="Category">
                 <Select
                   value={selectedBlog.category}
