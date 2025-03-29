@@ -84,21 +84,29 @@
   align-items: center;
   gap: 0.5rem;
   background: none;
-  border: none;
+  border: none; /* No border */
   cursor: pointer;
   font-size: 1rem;
   color: var(--text-color);
   padding: 0.5rem 1rem;
-  border-radius: 20px;
   transition: all 0.3s ease;
 }
 
-.like-button:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+.like-button svg {
+  width: 20px;
+  height: 20px;
+  stroke: var(--text-color); /* Default stroke color */
+  fill: none; /* Default: no fill */
+  transition: fill 0.3s ease, stroke 0.3s ease; /* Smooth transition */
 }
 
-.like-button.liked {
-  color: #e74c3c;
+.like-button:hover:not(.liked) svg {
+  stroke: #888; /* Slightly darker stroke on hover when not liked */
+}
+
+.like-button.liked svg {
+  stroke: #e74c3c; /* Red stroke */
+  fill: #e74c3c; /* Filled red heart */
 }
 
 .report-button:hover {
@@ -412,4 +420,3 @@
     margin-left: 1rem;
   }
 }
-

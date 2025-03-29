@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react"
-import { blogUtil, categoryUtil } from "../../util"
+import { useState, useEffect } from "react";
+import { blogUtil, categoryUtil } from "../../util";
 import {
   Table,
   Button,
@@ -16,112 +16,105 @@ import {
   Drawer,
   Descriptions,
   Tooltip,
-} from "antd"
-import { DeleteOutlined, EyeOutlined } from "@ant-design/icons"
-import "./AdminPages.css"
+} from "antd";
+import { DeleteOutlined, EyeOutlined } from "@ant-design/icons";
+import "./AdminPages.css";
 
-const { Title, Text, Paragraph } = Typography
-const { Option } = Select
+const { Title, Paragraph } = Typography;
+const { Option } = Select;
 
 const ManageBlogs = () => {
-  const [blogs, setBlogs] = useState([])
-  const [categories, setCategories] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [selectedBlog, setSelectedBlog] = useState(null)
-  const [drawerVisible, setDrawerVisible] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState("")
-  const [filterStatus, setFilterStatus] = useState("")
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth)
+  const [blogs, setBlogs] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedBlog, setSelectedBlog] = useState(null);
+  const [drawerVisible, setDrawerVisible] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch blogs
-        const blogsData = await blogUtil.getAllBlogs("createdAt", "desc")
-        setBlogs(blogsData)
-
-        // Fetch categories
-        const categoriesData = await categoryUtil.getAllCategories()
-        setCategories(categoriesData)
+        const blogsData = await blogUtil.getAllBlogs("createdAt", "desc");
+        setBlogs(blogsData);
+        const categoriesData = await categoryUtil.getAllCategories();
+        setCategories(categoriesData);
       } catch (error) {
-        console.error("Error fetching data:", error)
+        console.error("Error fetching data:", error);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchData()
+    fetchData();
 
     const handleResize = () => {
-      setWindowWidth(window.innerWidth)
-    }
+      setWindowWidth(window.innerWidth);
+    };
 
-    window.addEventListener("resize", handleResize)
+    window.addEventListener("resize", handleResize);
     return () => {
-      window.removeEventListener("resize", handleResize)
-    }
-  }, [])
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
 
   const showDrawer = (blog) => {
-    setSelectedBlog(blog)
-    setDrawerVisible(true)
-  }
+    setSelectedBlog(blog);
+    setDrawerVisible(true);
+  };
 
   const closeDrawer = () => {
-    setDrawerVisible(false)
-  }
+    setDrawerVisible(false);
+  };
 
   const handleDeleteBlog = async (id) => {
     try {
-      const result = await blogUtil.deleteBlog(id)
-
+      const result = await blogUtil.deleteBlog(id);
       if (result.success) {
-        setBlogs((prev) => prev.filter((blog) => blog.id !== id))
-
+        setBlogs((prev) => prev.filter((blog) => blog.id !== id));
         if (selectedBlog && selectedBlog.id === id) {
-          setDrawerVisible(false)
+          setDrawerVisible(false);
         }
       }
     } catch (error) {
-      console.error("Error deleting blog:", error)
+      console.error("Error deleting blog:", error);
     }
-  }
+  };
 
   const handleCategoryChange = async (blogId, categoryName) => {
     try {
-      const result = await blogUtil.updateBlog(blogId, { category: categoryName })
-
+      const result = await blogUtil.updateBlog(blogId, { category: categoryName });
       if (result.success) {
-        setBlogs((prev) => prev.map((blog) => (blog.id === blogId ? { ...blog, category: categoryName } : blog)))
-
+        setBlogs((prev) =>
+          prev.map((blog) =>
+            blog.id === blogId ? { ...blog, category: categoryName } : blog
+          )
+        );
         if (selectedBlog && selectedBlog.id === blogId) {
-          setSelectedBlog((prev) => ({ ...prev, category: categoryName }))
+          setSelectedBlog((prev) => ({ ...prev, category: categoryName }));
         }
       }
     } catch (error) {
-      console.error("Error updating blog category:", error)
+      console.error("Error updating blog category:", error);
     }
-  }
+  };
 
-  // Filter blogs based on category and status
-  const filteredBlogs = blogs.filter((blog) => {
-    const matchesCategory = selectedCategory ? blog.category === selectedCategory : true
-    const matchesStatus = filterStatus ? blog.status === filterStatus : true
-    return matchesCategory && matchesStatus
-  })
+  const filteredBlogs = blogs.filter((blog) =>
+    selectedCategory ? blog.category === selectedCategory : true
+  );
 
   const getStatusBadge = (status) => {
     switch (status) {
       case "approved":
-        return <Badge status="success" text="Approved" />
+        return <Badge status="success" text="Approved" />;
       case "rejected":
-        return <Badge status="error" text="Rejected" />
+        return <Badge status="error" text="Rejected" />;
       case "pending":
-        return <Badge status="processing" text="Pending" />
+        return <Badge status="processing" text="Pending" />;
       default:
-        return <Badge status="default" text={status} />
+        return <Badge status="default" text={status} />;
     }
-  }
+  };
 
   const getColumns = () => {
     const baseColumns = [
@@ -209,10 +202,10 @@ const ManageBlogs = () => {
           </Space>
         ),
       },
-    ]
+    ];
 
-    return baseColumns
-  }
+    return baseColumns;
+  };
 
   return (
     <div className="admin-manage-page">
@@ -221,21 +214,24 @@ const ManageBlogs = () => {
           <Title level={2}>Manage Blogs</Title>
         </Col>
         <Col xs={24} md={12} lg={8}>
-        <Space direction={windowWidth < 768 ? "vertical" : "horizontal"} style={{ width: "100%", justifyContent: 'flex-end' }}>
-          <Select
-            placeholder="Filter by Category"
-            style={{ width: "150px" }}
-            allowClear
-            onChange={setSelectedCategory}
-            value={selectedCategory}
+          <Space
+            direction={windowWidth < 768 ? "vertical" : "horizontal"}
+            style={{ width: "100%", justifyContent: "flex-end" }}
           >
-            {categories.map((category) => (
-              <Option key={category.id} value={category.name}>
-                {category.name}
-              </Option>
-            ))}
-          </Select>
-        </Space>
+            <Select
+              placeholder="Filter by Category"
+              style={{ width: "150px" }}
+              allowClear
+              onChange={setSelectedCategory}
+              value={selectedCategory}
+            >
+              {categories.map((category) => (
+                <Option key={category.id} value={category.name}>
+                  {category.name}
+                </Option>
+              ))}
+            </Select>
+          </Space>
         </Col>
       </Row>
 
@@ -265,8 +261,8 @@ const ManageBlogs = () => {
             <Popconfirm
               title="Are you sure you want to delete this blog?"
               onConfirm={() => {
-                handleDeleteBlog(selectedBlog.id)
-                closeDrawer()
+                handleDeleteBlog(selectedBlog.id);
+                closeDrawer();
               }}
               okText="Yes"
               cancelText="No"
@@ -323,8 +319,7 @@ const ManageBlogs = () => {
         )}
       </Drawer>
     </div>
-  )
-}
+  );
+};
 
-export default ManageBlogs
-
+export default ManageBlogs;
